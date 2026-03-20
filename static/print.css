@@ -1,0 +1,402 @@
+/* ============================================================
+   DealSim — Print Stylesheet
+   media="print" — loaded only when the user prints.
+   Goal: clean scorecard on white paper, no interactive chrome.
+   ============================================================ */
+
+@media print {
+
+  /* ── 1. Reset dark theme, enforce white paper ─────────────── */
+
+  *,
+  *::before,
+  *::after {
+    background: #fff !important;
+    color: #111 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    animation: none !important;
+    transition: none !important;
+    backdrop-filter: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #111 !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+  }
+
+
+  /* ── 2. Hide everything that isn't the scorecard ─────────── */
+
+  /* Navigation */
+  #global-nav,
+  #nav-links,
+  #nav-hamburger,
+  #mobile-menu,
+  #stats-bar {
+    display: none !important;
+  }
+
+  /* All sections except the scorecard */
+  .section {
+    display: none !important;
+  }
+
+  #sec-scorecard {
+    display: block !important;
+    opacity: 1 !important;
+    min-height: unset !important;
+  }
+
+  /* Theme effects */
+  .arena-grid,
+  .arena-scanline,
+  .arena-particles,
+  .arena-particle,
+  .coach-blob,
+  .theme-switcher {
+    display: none !important;
+  }
+
+  /* Floating feedback button */
+  #floating-feedback {
+    display: none !important;
+  }
+
+  /* Footer */
+  footer {
+    display: none !important;
+  }
+
+  /* Toast */
+  #toast {
+    display: none !important;
+  }
+
+  /* All buttons and interactive elements */
+  button,
+  input,
+  textarea,
+  select,
+  .feedback-section,
+  #feedback-section,
+  #debrief-btn,
+  #playbook-btn,
+  .star-btn,
+  .fab-star {
+    display: none !important;
+  }
+
+  /* Share and Try Again rows */
+  .grid.grid-cols-1.sm\:grid-cols-2 {
+    display: none !important;
+  }
+
+  /* "Try Again" standalone button (last button in scorecard) */
+  #sec-scorecard > div > div > button {
+    display: none !important;
+  }
+
+  /* Learning path, achievements */
+  #learning-path-container,
+  #achievements-container {
+    display: none !important;
+  }
+
+  /* Motivational italic footer line */
+  #sec-scorecard p.italic {
+    display: none !important;
+  }
+
+
+  /* ── 3. Print branding header ─────────────────────────────── */
+
+  #sec-scorecard::before {
+    content: 'DealSim';
+    display: block;
+    font-size: 22pt;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #c0392b !important;
+    margin-bottom: 2pt;
+  }
+
+  #sec-scorecard::after {
+    content: 'dealsim.app  —  Negotiation Scorecard';
+    display: block;
+    font-size: 8pt;
+    color: #888 !important;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-bottom: 1pt solid #ddd;
+    padding-bottom: 8pt;
+    margin-bottom: 14pt;
+  }
+
+
+  /* ── 4. Scorecard layout cleanup ─────────────────────────── */
+
+  #sec-scorecard > div {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  #sec-scorecard .max-w-2xl {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+
+  /* ── 5. Date + scenario line ──────────────────────────────── */
+
+  /* Inject date + URL as a sub-header via the score label paragraph */
+  #score-label::after {
+    content: ' — Printed ' attr(data-print-date);
+    font-size: 8pt;
+    font-weight: 400;
+    color: #888 !important;
+    letter-spacing: 0;
+  }
+
+
+  /* ── 6. Score circle — border, not filled background ─────── */
+
+  #overall-score-display {
+    width: 100pt !important;
+    height: 100pt !important;
+    border-radius: 50% !important;
+    border: 3pt solid #c0392b !important;
+    background: #fff !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #c0392b !important;
+  }
+
+  #overall-score-num {
+    font-size: 32pt !important;
+    font-weight: 800 !important;
+    color: #c0392b !important;
+  }
+
+  /* Score label (Excellent / Developing / etc.) */
+  #score-label {
+    font-size: 12pt !important;
+    font-weight: 700 !important;
+    color: #c0392b !important;
+  }
+
+  /* Summary text */
+  #score-summary {
+    font-size: 9pt !important;
+    color: #444 !important;
+  }
+
+
+  /* ── 7. Money Left on Table block ────────────────────────── */
+
+  #scorecard-money-left {
+    border: 1pt solid #e0a800 !important;
+    border-radius: 8pt !important;
+    background: #fff !important;
+    padding: 10pt !important;
+    margin-bottom: 12pt !important;
+    text-align: center;
+  }
+
+  #scorecard-money-left p,
+  #scorecard-money-left div {
+    color: #111 !important;
+  }
+
+  #scorecard-money-amount {
+    font-size: 24pt !important;
+    font-weight: 800 !important;
+    color: #b08000 !important;
+  }
+
+  /* Hide the "See full debrief" button inside this block */
+  #scorecard-money-left button {
+    display: none !important;
+  }
+
+
+  /* ── 8. Dimension breakdown — plain text percentages ─────── */
+
+  /* Card wrapper */
+  #sec-scorecard .result-card,
+  #sec-scorecard .bg-navy-card,
+  #sec-scorecard [class*="bg-navy"] {
+    background: #fff !important;
+    border: 1pt solid #ddd !important;
+    border-radius: 6pt !important;
+    padding: 10pt !important;
+    margin-bottom: 10pt !important;
+    page-break-inside: avoid;
+  }
+
+  /* Section headings inside cards */
+  #sec-scorecard h2 {
+    font-size: 7pt !important;
+    font-weight: 700 !important;
+    color: #888 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    margin-bottom: 8pt !important;
+  }
+
+  /* Each dimension row */
+  #dimension-bars > div {
+    margin-bottom: 6pt !important;
+    page-break-inside: avoid;
+  }
+
+  /* Dimension label + number row */
+  #dimension-bars .flex.justify-between {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: baseline !important;
+    margin-bottom: 2pt !important;
+  }
+
+  #dimension-bars .flex.justify-between span:first-child {
+    font-size: 9pt !important;
+    color: #222 !important;
+  }
+
+  /* Score number — printed prominently */
+  #dimension-bars .flex.justify-between span:last-child {
+    font-size: 10pt !important;
+    font-weight: 700 !important;
+    color: #222 !important;
+  }
+
+  /* Progress bar track — print as a thin rule with filled portion */
+  #dimension-bars .h-2.bg-white\/10 {
+    height: 4pt !important;
+    background: #eee !important;
+    border-radius: 2pt !important;
+    overflow: hidden !important;
+  }
+
+  /* Filled bar portion */
+  #dimension-bars .fill-bar {
+    height: 100% !important;
+    background: #c0392b !important;
+    border-radius: 2pt !important;
+    /* width is set inline by JS — preserved in print */
+  }
+
+
+  /* ── 9. Radar chart — keep if rendered, hide if not ──────── */
+
+  #radar-chart-container {
+    page-break-inside: avoid;
+  }
+
+  #radar-chart canvas,
+  #radar-chart svg {
+    max-width: 240pt !important;
+    height: auto !important;
+  }
+
+
+  /* ── 10. Coaching tips ───────────────────────────────────── */
+
+  #coaching-tips {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  #coaching-tips li {
+    display: flex !important;
+    gap: 6pt !important;
+    align-items: flex-start !important;
+    margin-bottom: 5pt !important;
+    font-size: 9pt !important;
+    color: #222 !important;
+    page-break-inside: avoid;
+  }
+
+  /* Bullet icon — replace SVG with a simple dash */
+  #coaching-tips li span:first-child {
+    display: inline-block !important;
+    width: 8pt !important;
+    flex-shrink: 0 !important;
+    color: #c0392b !important;
+    font-weight: 700 !important;
+  }
+
+  #coaching-tips li span:first-child svg {
+    display: none !important;
+  }
+
+  #coaching-tips li span:first-child::after {
+    content: '–';
+    color: #c0392b !important;
+  }
+
+
+  /* ── 11. Typography overrides ────────────────────────────── */
+
+  p, span, li, div {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Tailwind opacity helpers that set color via currentColor */
+  .text-white\/70,
+  .text-white\/75,
+  .text-white\/60,
+  .text-white\/30 {
+    color: #555 !important;
+  }
+
+  .text-white\/80 {
+    color: #333 !important;
+  }
+
+  .text-coral,
+  .text-emerald-400,
+  .text-yellow-400 {
+    color: #222 !important;
+  }
+
+  /* Section title just above score circle */
+  .text-white\/70.text-sm.font-medium.uppercase {
+    color: #888 !important;
+    font-size: 7pt !important;
+  }
+
+
+  /* ── 12. Page setup ──────────────────────────────────────── */
+
+  @page {
+    size: A4 portrait;
+    margin: 18mm 20mm 18mm 20mm;
+  }
+
+  /* Avoid breaking cards across pages */
+  .result-card,
+  .bg-navy-card,
+  [class*="bg-navy"] {
+    page-break-inside: avoid;
+  }
+
+  /* Force a page break before the coaching section if needed */
+  #sec-scorecard .result-card:last-of-type,
+  #sec-scorecard .bg-navy-card:last-of-type {
+    page-break-before: auto;
+  }
+
+}

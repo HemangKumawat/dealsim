@@ -1,0 +1,1152 @@
+/* ============================================================
+   DealSim Theme System
+   3 switchable themes via [data-theme] attribute on <html>
+   Default (no attribute) = Arena theme
+   ============================================================ */
+
+/* --- 1. CSS Custom Properties -------------------------------- */
+
+:root,
+[data-theme="arena"] {
+  --bg:             #0f0f23;
+  --bg-gradient:    linear-gradient(180deg, #0f0f23 0%, #1a1a2e 100%);
+  --card-bg:        #1a1a2e;
+  --card-border:    rgba(249, 92, 92, 0.25);
+  --accent:         #f95c5c;
+  --accent-dark:    #e04444;
+  --accent-light:   #ff7a7a;
+  --accent-glow:    rgba(249, 92, 92, 0.45);
+  --secondary:      #ffd700;
+  --text:           #ffffff;
+  --text-dim:       #b0b3d6;
+  --text-dim2:      #6b6f9e;
+  --chat-bg:        #2a2d6b;
+  --input-bg:       #1a1a2e;
+  --input-border:   rgba(249, 92, 92, 0.30);
+  --nav-bg:         rgba(15, 15, 35, 0.92);
+  --nav-border:     rgba(249, 92, 92, 0.15);
+  --scrollbar-thumb:#f95c5c;
+  --glow-color:     rgba(249, 92, 92, 0.35);
+  --focus-ring:     rgba(249, 92, 92, 0.50);
+}
+
+[data-theme="coach"] {
+  --bg:             #1a1147;
+  --bg-gradient:    linear-gradient(160deg, #1a1147 0%, #2d1b69 100%);
+  --card-bg:        #221758;
+  --card-border:    rgba(124, 92, 255, 0.30);
+  --accent:         #f5a623;
+  --accent-dark:    #d48f1a;
+  --accent-light:   #ffc04d;
+  --accent-glow:    rgba(245, 166, 35, 0.40);
+  --secondary:      #00d68f;
+  --text:           #ffffff;
+  --text-dim:       #c4b5e3;
+  --text-dim2:      #8a78b3;
+  --chat-bg:        #2d1b69;
+  --input-bg:       #221758;
+  --input-border:   rgba(124, 92, 255, 0.35);
+  --nav-bg:         rgba(26, 17, 71, 0.94);
+  --nav-border:     rgba(124, 92, 255, 0.20);
+  --scrollbar-thumb:#7c5cff;
+  --glow-color:     rgba(124, 92, 255, 0.30);
+  --focus-ring:     rgba(245, 166, 35, 0.50);
+}
+
+[data-theme="lab"] {
+  --bg:             #0d1117;
+  --bg-gradient:    linear-gradient(180deg, #0d1117 0%, #0d1117 100%);
+  --card-bg:        #161b22;
+  --card-border:    #30363d;
+  --accent:         #58a6ff;
+  --accent-dark:    #388bfd;
+  --accent-light:   #79c0ff;
+  --accent-glow:    rgba(88, 166, 255, 0.20);
+  --secondary:      #f0883e;
+  --text:           #c9d1d9;
+  --text-dim:       #8b949e;
+  --text-dim2:      #6e7681;
+  --chat-bg:        #1c2128;  /* one step lighter than --card-bg for visual separation */
+  --input-bg:       #0d1117;
+  --input-border:   #30363d;
+  --nav-bg:         rgba(13, 17, 23, 0.95);
+  --nav-border:     #21262d;
+  --scrollbar-thumb:#30363d;
+  --glow-color:     rgba(88, 166, 255, 0.10);
+  --focus-ring:     rgba(88, 166, 255, 0.40);
+}
+
+
+/* --- 2. Base Styles ------------------------------------------ */
+
+body {
+  background: var(--bg);
+  background-image: var(--bg-gradient);
+  color: var(--text);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Smooth theme transitions */
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition:
+    background-color 0.5s ease,
+    color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+
+/* --- 3. Component Overrides ---------------------------------- */
+
+/* Cards */
+.ds-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+}
+
+[data-theme="arena"] .ds-card {
+  box-shadow: 0 0 20px var(--glow-color), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+[data-theme="coach"] .ds-card {
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25), 0 0 40px var(--glow-color);
+}
+
+[data-theme="lab"] .ds-card {
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+/* Buttons */
+.ds-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.ds-btn:hover {
+  background: var(--accent-dark);
+}
+
+.ds-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+[data-theme="arena"] .ds-btn {
+  box-shadow: 0 0 12px var(--accent-glow);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+[data-theme="arena"] .ds-btn:hover {
+  box-shadow: 0 0 24px var(--accent-glow), 0 0 48px rgba(249,92,92,0.2);
+}
+
+[data-theme="coach"] .ds-btn {
+  border-radius: 999px;
+  box-shadow: 0 2px 12px var(--accent-glow);
+}
+
+[data-theme="coach"] .ds-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px var(--accent-glow);
+}
+
+[data-theme="lab"] .ds-btn {
+  border-radius: 6px;
+  box-shadow: none;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+[data-theme="lab"] .ds-btn:hover {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+/* Inputs */
+.ds-input {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text);
+  border-radius: 8px;
+}
+
+.ds-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+[data-theme="coach"] .ds-input {
+  border-radius: 14px;
+}
+
+[data-theme="lab"] .ds-input {
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Chat bubbles */
+.ds-chat-bubble {
+  background: var(--chat-bg);
+  border-radius: 12px;
+  color: var(--text);
+}
+
+.ds-chat-bubble--user {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+[data-theme="arena"] .ds-chat-bubble {
+  border: 1px solid rgba(249,92,92,0.12);
+}
+
+[data-theme="coach"] .ds-chat-bubble {
+  border-radius: 20px;
+  border: 1px solid var(--card-border);
+}
+
+[data-theme="coach"] .ds-chat-bubble--user {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+}
+
+[data-theme="lab"] .ds-chat-bubble {
+  border-radius: 4px;
+  border: 1px solid var(--card-border);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.9em;
+}
+
+
+/* --- 4. Scrollbar -------------------------------------------- */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+[data-theme="lab"] ::-webkit-scrollbar {
+  width: 6px;
+}
+
+[data-theme="lab"] ::-webkit-scrollbar-thumb {
+  border-radius: 0;
+}
+
+
+/* --- 5. Arena-Specific Effects ------------------------------- */
+
+/* Cyberpunk grid overlay */
+.arena-grid {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+}
+
+[data-theme="arena"] .arena-grid {
+  opacity: 1;
+  background-image:
+    linear-gradient(rgba(249,92,92,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(249,92,92,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  will-change: transform;
+  animation: arena-grid-drift 20s linear infinite;
+}
+
+@keyframes arena-grid-drift {
+  0%   { transform: translate(0, 0); }
+  100% { transform: translate(60px, 60px); }
+}
+
+/* Scanline overlay */
+.arena-scanline {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+}
+
+[data-theme="arena"] .arena-scanline {
+  opacity: 1;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.06) 2px,
+    rgba(0,0,0,0.06) 4px
+  );
+}
+
+/* Floating particles */
+.arena-particles {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+
+[data-theme="arena"] .arena-particles {
+  opacity: 1;
+}
+
+.arena-particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 50%;
+  opacity: 0;
+}
+
+[data-theme="arena"] .arena-particle {
+  will-change: transform, opacity;
+  animation: arena-float 8s ease-in-out infinite;
+}
+
+[data-theme="arena"] .arena-particle:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 7s; }
+[data-theme="arena"] .arena-particle:nth-child(2) { left: 25%; animation-delay: 1.2s; animation-duration: 9s; }
+[data-theme="arena"] .arena-particle:nth-child(3) { left: 40%; animation-delay: 2.5s; animation-duration: 6s; }
+[data-theme="arena"] .arena-particle:nth-child(4) { left: 55%; animation-delay: 0.8s; animation-duration: 10s; }
+[data-theme="arena"] .arena-particle:nth-child(5) { left: 70%; animation-delay: 3.1s; animation-duration: 8s; }
+[data-theme="arena"] .arena-particle:nth-child(6) { left: 85%; animation-delay: 1.7s; animation-duration: 7.5s; }
+[data-theme="arena"] .arena-particle:nth-child(7) { left: 50%; animation-delay: 4.0s; animation-duration: 11s; }
+[data-theme="arena"] .arena-particle:nth-child(8) { left: 15%; animation-delay: 2.2s; animation-duration: 6.5s; }
+
+@keyframes arena-float {
+  0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+  10%  { opacity: 0.6; }
+  90%  { opacity: 0.6; }
+  100% { transform: translateY(-20vh) scale(1.2); opacity: 0; }
+}
+
+/* Arena glow pulse on accent elements */
+[data-theme="arena"] .coral-glow,
+[data-theme="arena"] .arena-glow {
+  animation: arena-glow-pulse 3s ease-in-out infinite;
+}
+
+@keyframes arena-glow-pulse {
+  0%, 100% { box-shadow: 0 0 15px var(--accent-glow); }
+  50%      { box-shadow: 0 0 30px var(--accent-glow), 0 0 60px rgba(249,92,92,0.15); }
+}
+
+
+/* --- 6. Coach-Specific Effects ------------------------------- */
+
+/* Morphing blob background */
+.coach-blob {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0;
+}
+
+[data-theme="coach"] .coach-blob {
+  opacity: 1;
+}
+
+.coach-blob--primary {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(124,92,255,0.25), transparent 70%);
+  top: -100px;
+  right: -100px;
+}
+
+[data-theme="coach"] .coach-blob--primary {
+  animation: coach-morph-1 15s ease-in-out infinite;
+}
+
+.coach-blob--secondary {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(245,166,35,0.18), transparent 70%);
+  bottom: -80px;
+  left: -80px;
+}
+
+[data-theme="coach"] .coach-blob--secondary {
+  animation: coach-morph-2 18s ease-in-out infinite;
+}
+
+.coach-blob--tertiary {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(0,214,143,0.12), transparent 70%);
+  top: 40%;
+  left: 50%;
+}
+
+[data-theme="coach"] .coach-blob--tertiary {
+  animation: coach-morph-3 12s ease-in-out infinite;
+}
+
+@keyframes coach-morph-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(-40px, 60px) scale(1.15); }
+  66%      { transform: translate(30px, -30px) scale(0.9); }
+}
+
+@keyframes coach-morph-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(50px, -40px) scale(1.1); }
+  66%      { transform: translate(-20px, 30px) scale(0.95); }
+}
+
+@keyframes coach-morph-3 {
+  0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  50%      { transform: translate(-60px, 40px) scale(1.2) rotate(15deg); }
+}
+
+/* Coach soft-glow on cards */
+[data-theme="coach"] .coach-glow {
+  animation: coach-soft-glow 4s ease-in-out infinite;
+}
+
+@keyframes coach-soft-glow {
+  0%, 100% { box-shadow: 0 4px 24px rgba(0,0,0,0.25), 0 0 30px var(--glow-color); }
+  50%      { box-shadow: 0 4px 24px rgba(0,0,0,0.25), 0 0 50px var(--glow-color); }
+}
+
+/* Coach subtle gradient shift — uses opacity on pseudo-element (GPU-composited, no repaints) */
+[data-theme="coach"] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background: linear-gradient(160deg, var(--bg) 0%, var(--card-bg) 100%);
+  opacity: 0;
+  animation: coach-bg-shift 30s ease-in-out infinite;
+}
+
+@keyframes coach-bg-shift {
+  0%, 100% { opacity: 0; }
+  50%      { opacity: 0.3; }
+}
+
+
+/* --- 7. Lab — intentionally minimal -------------------------- */
+
+[data-theme="lab"] body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+[data-theme="lab"] .ds-card {
+  border: 1px solid #30363d;
+}
+
+/* Lab uses subtle top-border accent on cards */
+[data-theme="lab"] .ds-card--accent {
+  border-top: 2px solid var(--accent);
+}
+
+/* Monospace labels in lab */
+[data-theme="lab"] .ds-label {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+
+/* --- 8. Theme Switcher Component ----------------------------- */
+
+.theme-switcher {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 4px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.theme-switcher__btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  z-index: 1;
+  transition: color 0.25s ease, transform 0.2s ease;
+  font-size: 18px;
+}
+
+.theme-switcher__btn:hover {
+  color: var(--text);
+  transform: scale(1.1);
+}
+
+.theme-switcher__btn[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+/* Sliding pill indicator */
+.theme-switcher__pill {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.15;
+  top: 4px;
+  left: 4px;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Pill positions — controlled via JS setting data-active */
+.theme-switcher[data-active="0"] .theme-switcher__pill { transform: translateX(0); }
+.theme-switcher[data-active="1"] .theme-switcher__pill { transform: translateX(40px); }
+.theme-switcher[data-active="2"] .theme-switcher__pill { transform: translateX(80px); }
+
+/* Click ripple micro-animation */
+.theme-switcher__btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  transform: scale(0);
+}
+
+.theme-switcher__btn:active::after {
+  animation: switcher-ripple 0.4s ease-out;
+}
+
+@keyframes switcher-ripple {
+  0%   { opacity: 0.3; transform: scale(0); }
+  100% { opacity: 0; transform: scale(2); }
+}
+
+/* Tooltip labels */
+.theme-switcher__btn[data-tooltip]::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.theme-switcher__btn:hover[data-tooltip]::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+
+/* --- 9. Utility Mapping -------------------------------------- */
+/* Bridge existing Tailwind-style classes to CSS variables       */
+
+.bg-navy-dark  { background-color: var(--bg) !important; }
+.bg-navy-card  { background-color: var(--card-bg) !important; }
+.bg-slate-chat { background-color: var(--chat-bg) !important; }
+.text-coral    { color: var(--accent) !important; }
+.border-coral  { border-color: var(--accent) !important; }
+
+.focus-coral:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring) !important;
+}
+
+.coral-glow {
+  box-shadow: 0 0 15px var(--accent-glow);
+}
+
+
+/* --- 10. Theme-Aware Landing Page Polish --------------------- */
+
+/* Nav bar per-theme bottom accent line */
+#global-nav {
+  border-bottom-color: var(--nav-border);
+  background: var(--nav-bg);
+  transition: background 0.4s ease, border-color 0.4s ease;
+}
+
+/* Active nav link indicator */
+.nav-link.active-nav {
+  color: var(--accent) !important;
+  background: rgba(255,255,255,0.06);
+}
+
+/* Hero badge — use theme accent */
+.hero-badge {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  background: rgba(0,0,0,0.15) !important;
+  backdrop-filter: blur(8px);
+  transition: border-color 0.4s ease, color 0.4s ease, background 0.4s ease;
+}
+
+/* Quick action cards — per-theme hover glow */
+.quick-action-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  transition: border-color 0.25s ease, box-shadow 0.3s ease, transform 0.2s ease, background 0.4s ease;
+}
+
+.quick-action-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+[data-theme="arena"] .quick-action-card:hover {
+  box-shadow: 0 0 20px var(--accent-glow), 0 8px 24px rgba(0,0,0,0.3);
+}
+
+[data-theme="coach"] .quick-action-card {
+  border-radius: 20px;
+}
+[data-theme="coach"] .quick-action-card:hover {
+  box-shadow: 0 8px 32px var(--accent-glow);
+}
+
+[data-theme="lab"] .quick-action-card {
+  border-radius: 6px;
+}
+[data-theme="lab"] .quick-action-card:hover {
+  box-shadow: none;
+  border-color: var(--accent);
+}
+
+/* Hero CTA button — per-theme treatment */
+.hero-cta {
+  border-color: var(--accent) !important;
+  background: rgba(0,0,0,0.2) !important;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease, transform 0.2s ease;
+}
+
+.hero-cta:hover {
+  border-color: var(--accent-light) !important;
+  background: rgba(0,0,0,0.3) !important;
+  transform: translateY(-1px);
+}
+
+[data-theme="arena"] .hero-cta {
+  box-shadow: 0 0 24px var(--accent-glow), inset 0 0 30px rgba(249,92,92,0.06);
+}
+[data-theme="arena"] .hero-cta:hover {
+  box-shadow: 0 0 40px var(--accent-glow), 0 0 80px rgba(249,92,92,0.12), inset 0 0 30px rgba(249,92,92,0.1);
+}
+
+[data-theme="coach"] .hero-cta {
+  border-radius: 24px !important;
+  box-shadow: 0 4px 24px var(--accent-glow);
+}
+[data-theme="coach"] .hero-cta:hover {
+  box-shadow: 0 8px 40px var(--accent-glow);
+}
+
+[data-theme="lab"] .hero-cta {
+  border-radius: 8px !important;
+  box-shadow: none;
+  border-width: 1px !important;
+}
+[data-theme="lab"] .hero-cta:hover {
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* Form card — per-theme border treatment */
+.form-card {
+  background: var(--card-bg);
+  border-color: var(--card-border);
+  transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+[data-theme="arena"] .form-card {
+  box-shadow: 0 0 30px var(--glow-color), 0 20px 50px rgba(0,0,0,0.4);
+}
+
+[data-theme="coach"] .form-card {
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 40px var(--glow-color);
+}
+
+[data-theme="lab"] .form-card {
+  border-radius: 8px;
+  box-shadow: none;
+  border-top: 2px solid var(--accent);
+}
+
+/* Difficulty pills — use theme accent */
+.diff-btn.selected {
+  background-color: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: #fff !important;
+}
+
+[data-theme="coach"] .diff-btn {
+  border-radius: 999px;
+}
+
+[data-theme="lab"] .diff-btn {
+  border-radius: 4px;
+}
+
+[data-theme="lab"] .diff-btn.selected {
+  background-color: transparent !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+
+/* Submit / primary action buttons — per-theme */
+.btn-primary {
+  background: var(--accent);
+  transition: background 0.2s ease, box-shadow 0.3s ease, transform 0.15s ease;
+}
+
+.btn-primary:hover {
+  background: var(--accent-dark);
+}
+
+[data-theme="arena"] .btn-primary {
+  box-shadow: 0 0 16px var(--accent-glow);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+[data-theme="arena"] .btn-primary:hover {
+  box-shadow: 0 0 32px var(--accent-glow), 0 0 64px rgba(249,92,92,0.15);
+}
+
+[data-theme="coach"] .btn-primary {
+  border-radius: 999px;
+  box-shadow: 0 4px 20px var(--accent-glow);
+}
+[data-theme="coach"] .btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 32px var(--accent-glow);
+}
+
+[data-theme="lab"] .btn-primary {
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+/* Scorecard — per-theme score ring */
+.score-ring {
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+[data-theme="arena"] .score-ring {
+  box-shadow: 0 0 30px var(--accent-glow), 0 0 60px rgba(249,92,92,0.1);
+}
+
+[data-theme="coach"] .score-ring {
+  box-shadow: 0 0 40px var(--accent-glow);
+}
+
+[data-theme="lab"] .score-ring {
+  box-shadow: none;
+}
+
+/* Section headers — themed accent underline */
+.section-title {
+  position: relative;
+  display: inline-block;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
+  transition: background 0.3s ease;
+}
+
+/* Content cards in results sections — per-theme polish */
+.result-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  transition: background 0.4s ease, border-color 0.4s ease, border-radius 0.3s ease;
+}
+
+[data-theme="coach"] .result-card {
+  border-radius: 20px;
+}
+
+[data-theme="lab"] .result-card {
+  border-radius: 6px;
+  border-top: 2px solid var(--accent);
+}
+
+/* Staggered entrance animation for cards and form elements */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section.active .stagger-1 { animation: slideUpFade 0.4s ease-out 0.05s both; }
+.section.active .stagger-2 { animation: slideUpFade 0.4s ease-out 0.12s both; }
+.section.active .stagger-3 { animation: slideUpFade 0.4s ease-out 0.19s both; }
+.section.active .stagger-4 { animation: slideUpFade 0.4s ease-out 0.26s both; }
+.section.active .stagger-5 { animation: slideUpFade 0.4s ease-out 0.33s both; }
+
+/* Smooth input focus per-theme */
+.themed-input {
+  background: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.4s ease;
+}
+
+.themed-input:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--focus-ring) !important;
+}
+
+[data-theme="coach"] .themed-input {
+  border-radius: 14px !important;
+}
+
+[data-theme="lab"] .themed-input {
+  border-radius: 4px !important;
+}
+
+/* Toast — per-theme styling */
+.toast {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="arena"] .toast {
+  border-left: 3px solid var(--accent);
+}
+
+[data-theme="coach"] .toast {
+  border-radius: 999px;
+}
+
+[data-theme="lab"] .toast {
+  border-radius: 4px;
+  border-left: 3px solid var(--accent);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+}
+
+/* Slider thumb — per-theme accent */
+input[type="range"]::-webkit-slider-thumb {
+  background: var(--accent) !important;
+}
+input[type="range"]::-moz-range-thumb {
+  background: var(--accent) !important;
+}
+
+/* Modal overlay — per-theme tint */
+.modal-overlay {
+  background: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(8px);
+}
+
+[data-theme="arena"] .modal-overlay {
+  background: rgba(15, 15, 35, 0.85) !important;
+}
+
+[data-theme="coach"] .modal-overlay {
+  background: rgba(26, 17, 71, 0.85) !important;
+}
+
+[data-theme="lab"] .modal-overlay {
+  background: rgba(13, 17, 23, 0.90) !important;
+}
+
+
+/* --- 10b. Chat Section Per-Theme Polish ---------------------- */
+
+/* Chat header — per-theme background */
+#sec-chat .border-b {
+  background: var(--nav-bg);
+  border-bottom-color: var(--nav-border);
+}
+
+/* Chat bubbles — per-theme styling (supplement inline Tailwind) */
+[data-theme="arena"] .bg-coral {
+  box-shadow: 0 2px 12px var(--accent-glow);
+}
+
+[data-theme="coach"] .bg-coral {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark)) !important;
+  border-radius: 20px !important;
+}
+
+[data-theme="lab"] .bg-coral {
+  border-radius: 4px !important;
+}
+
+/* Chat input area — per-theme */
+#sec-chat .border-t {
+  background: var(--nav-bg);
+  border-top-color: var(--nav-border);
+}
+
+/* Opponent avatar — per-theme accent ring */
+#opponent-avatar {
+  background: rgba(var(--accent), 0.15);
+  border-color: var(--accent);
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+/* Typing indicator dots — use theme accent */
+[data-theme="coach"] .dot {
+  background: var(--accent);
+}
+
+[data-theme="lab"] .dot {
+  background: var(--accent);
+  border-radius: 1px;
+}
+
+/* Keyboard shortcut hints — per-theme */
+[data-theme="lab"] kbd {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  border: 1px solid var(--card-border);
+}
+
+
+/* --- 11. Scorecard, Dimension Bars, Coaching Tips ------------ */
+
+/* Dimension bar fill — uses accent for low scores, keeps green/yellow for high/mid */
+.dim-bar-fill {
+  border-radius: 9999px;
+  height: 100%;
+  transition: width 0.8s ease-out, background 0.4s ease;
+}
+
+/* Per-theme bar track */
+.dim-bar-track {
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+[data-theme="arena"] .dim-bar-track {
+  background: rgba(249, 92, 92, 0.08);
+}
+
+[data-theme="coach"] .dim-bar-track {
+  background: rgba(124, 92, 255, 0.08);
+  border-radius: 999px;
+}
+
+[data-theme="lab"] .dim-bar-track {
+  border-radius: 2px;
+  background: rgba(255,255,255,0.06);
+}
+
+[data-theme="lab"] .dim-bar-fill {
+  border-radius: 2px;
+}
+
+/* Coaching tip icons — use theme accent */
+.coaching-icon {
+  color: var(--accent);
+  transition: color 0.3s ease;
+}
+
+/* Coaching tip cards container — per-theme spacing */
+[data-theme="coach"] #coaching-tips li {
+  padding: 4px 0;
+}
+
+/* Action buttons in scorecard — per-theme */
+.action-btn {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  transition: border-color 0.25s ease, background 0.3s ease, color 0.2s ease;
+}
+
+.action-btn:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+[data-theme="coach"] .action-btn {
+  border-radius: 16px;
+}
+
+[data-theme="lab"] .action-btn {
+  border-radius: 6px;
+}
+
+/* Chat bubble theme-aware classes */
+.chat-bubble-user {
+  background: var(--accent);
+  color: #fff;
+  transition: background 0.3s ease, border-radius 0.3s ease, box-shadow 0.3s ease;
+}
+
+[data-theme="arena"] .chat-bubble-user {
+  box-shadow: 0 2px 12px var(--accent-glow);
+}
+
+[data-theme="coach"] .chat-bubble-user {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  border-radius: 20px 20px 4px 20px !important;
+}
+
+[data-theme="lab"] .chat-bubble-user {
+  border-radius: 4px 4px 0 4px !important;
+}
+
+.chat-bubble-opponent {
+  background: var(--chat-bg);
+  color: rgba(255,255,255,0.9);
+  border: 1px solid var(--card-border);
+  transition: background 0.3s ease, border-color 0.3s ease, border-radius 0.3s ease;
+}
+
+[data-theme="coach"] .chat-bubble-opponent {
+  border-radius: 20px 20px 20px 4px !important;
+}
+
+[data-theme="lab"] .chat-bubble-opponent {
+  border-radius: 4px 4px 4px 0 !important;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.85em;
+}
+
+/* System message — theme aware */
+.chat-system-msg {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--card-border);
+  color: var(--accent);
+}
+
+[data-theme="lab"] .chat-system-msg {
+  border-radius: 4px;
+}
+
+
+/* --- 12. Responsive & Reduced Motion ------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-transition,
+  .theme-transition *,
+  .theme-transition *::after,
+  .theme-transition *::before {
+    transition-duration: 0.01ms !important;
+  }
+
+  [data-theme="arena"] .arena-particle,
+  [data-theme="arena"] .arena-grid,
+  [data-theme="arena"] .arena-scanline,
+  [data-theme="arena"] .coral-glow,
+  [data-theme="arena"] .arena-glow,
+  [data-theme="coach"] .coach-blob,
+  [data-theme="coach"] body,
+  [data-theme="coach"] .coach-glow {
+    animation: none !important;
+  }
+
+  /* Disable stagger entrance animations */
+  .stagger-1, .stagger-2, .stagger-3, .stagger-4, .stagger-5 {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  /* Catch-all: disable all remaining animations and transitions */
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .theme-switcher {
+    bottom: 12px;
+    right: 12px;
+    padding: 3px;
+  }
+
+  .theme-switcher__btn {
+    width: 34px;
+    height: 34px;
+    font-size: 15px;
+  }
+
+  .theme-switcher__pill {
+    width: 34px;
+    height: 34px;
+    top: 3px;
+    left: 3px;
+  }
+
+  .theme-switcher[data-active="1"] .theme-switcher__pill { transform: translateX(34px); }
+  .theme-switcher[data-active="2"] .theme-switcher__pill { transform: translateX(68px); }
+}

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="refresh" content="15">
+  <title>DealSim — Starting up</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --border:    #2a2d3a;
+      --accent:    #6366f1;
+      --accent-lo: rgba(99,102,241,0.12);
+      --text:      #e2e4ec;
+      --muted:     #8b8fa8;
+      --dot-size:  6px;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      padding: 1.5rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 2.5rem 3rem;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* Animated pulse ring around the logo mark */
+    .logo-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: var(--accent-lo);
+      border: 1px solid var(--accent);
+      margin-bottom: 1.75rem;
+      position: relative;
+    }
+    .logo-wrap::after {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border-radius: 20px;
+      border: 1px solid var(--accent);
+      opacity: 0;
+      animation: pulse 2s ease-out infinite;
+    }
+    @keyframes pulse {
+      0%   { transform: scale(1);   opacity: 0.6; }
+      100% { transform: scale(1.18); opacity: 0; }
+    }
+
+    .logo-mark {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.25px;
+      margin-bottom: 0.6rem;
+      color: var(--text);
+    }
+
+    p {
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
+
+    /* Three-dot loading indicator */
+    .dots {
+      display: flex;
+      gap: 7px;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+    .dots span {
+      width: var(--dot-size);
+      height: var(--dot-size);
+      border-radius: 50%;
+      background: var(--accent);
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+    .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40%           { transform: scale(1);   opacity: 1;   }
+    }
+
+    .refresh-hint {
+      font-size: 0.8125rem;
+      color: var(--border);
+      border-top: 1px solid var(--border);
+      padding-top: 1.25rem;
+    }
+    .refresh-hint a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .refresh-hint a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo-wrap" aria-hidden="true">
+      <span class="logo-mark">D$</span>
+    </div>
+
+    <h1>DealSim is warming up</h1>
+    <p>The app is starting. This usually takes less than 30 seconds.<br>This page will refresh automatically.</p>
+
+    <div class="dots" role="status" aria-label="Loading">
+      <span></span><span></span><span></span>
+    </div>
+
+    <p class="refresh-hint">
+      Still seeing this? <a href="javascript:location.reload()">Refresh manually</a>
+    </p>
+  </div>
+</body>
+</html>

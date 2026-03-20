@@ -1,0 +1,13 @@
+{
+  "name": "dealsim",
+  "version": "1.0.0",
+  "description": "DealSim — Negotiation Simulator (CSS build tooling)",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i src/styles/input.css -o static/tailwind.out.css --minify",
+    "watch:css": "tailwindcss -i src/styles/input.css -o static/tailwind.out.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}

@@ -1,0 +1,13 @@
+__pycache__
+*.pyc
+.git
+.env
+.venv
+venv
+tests/
+*.md
+.dockerignore
+docker-compose.yml
+fly.toml
+render.yaml
+railway.json

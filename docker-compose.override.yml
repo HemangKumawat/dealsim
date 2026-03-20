@@ -1,0 +1,63 @@
+# =============================================================================
+# docker-compose.override.yml — Development overrides
+#
+# Docker Compose applies this file automatically on top of docker-compose.yml
+# when you run "docker compose" without specifying -f flags. It is NOT used
+# in production (production runs via scripts/deploy.sh which passes -f
+# docker-compose.yml explicitly).
+#
+# What this changes from production:
+#   - Single uvicorn worker (faster reload, readable logs)
+#   - Source code mounted for live reload (uvicorn --reload)
+#   - App exposed directly on host port 8001 (no nginx required)
+#   - nginx and certbot services are disabled
+#   - No resource limits (local machine, not constrained VPS)
+#   - Data directory is a bind-mount so you can inspect files easily
+# =============================================================================
+
+services:
+
+  app:
+    environment:
+      DEALSIM_ENV: development
+      DEALSIM_WORKERS: "1"
+      DEALSIM_DATA_DIR: /app/data
+    volumes:
+      # Live code reload: changes in src/ are reflected immediately
+      - ./src:/app/src:ro
+      # Bind-mount local data/ so you can inspect JSONL files directly
+      - ./data:/app/data
+    ports:
+      # Expose app directly on 8001 so you can hit it without nginx
+      - "8001:8000"
+    # Override the CMD to enable --reload
+    command:
+      - uvicorn
+      - dealsim_mvp.app:app
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8000"
+      - --reload
+      - --reload-dir
+      - /app/src
+    # Relax health check timing — reload can cause brief downtime
+    healthcheck:
+      start_period: 5s
+      interval: 10s
+    # No resource limits in dev
+    deploy:
+      resources:
+        limits:
+          cpus: "4.00"
+          memory: 2G
+
+  # Disable nginx in development — talk directly to the app on port 8001
+  nginx:
+    profiles:
+      - production-only
+
+  # Disable certbot in development — no SSL needed locally
+  certbot:
+    profiles:
+      - production-only

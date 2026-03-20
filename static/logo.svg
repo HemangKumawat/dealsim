@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <!-- Left speech bubble -->
+  <path d="M2 5 Q2 3 4 3 L12 3 Q14 3 14 5 L14 10 Q14 12 12 12 L7 12 L5 14 L5.5 12 L4 12 Q2 12 2 10 Z"
+        fill="#f95c5c" opacity="0.8"/>
+
+  <!-- Right speech bubble -->
+  <path d="M10 9 Q10 7 12 7 L19 7 Q21 7 21 9 L21 14 Q21 16 19 16 L18.5 16 L19 18 L17 16 L12 16 Q10 16 10 14 Z"
+        fill="#f95c5c"/>
+</svg>

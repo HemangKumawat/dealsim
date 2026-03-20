@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DealSim — The Arena</title>
+  <link rel="stylesheet" href="/tailwind.out.css" />
+  <link rel="stylesheet" href="/themes.css" />
+  <style>
+    /* ── Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background-color: #0f0f23;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── Typography helpers ── */
+    .text-dim  { color: rgba(255,255,255,0.65); }
+    .text-dim2 { color: rgba(255,255,255,0.40); }
+
+    /* ── Color vars ── */
+    :root {
+      --coral:  #f95c5c;
+      --gold:   #ffd700;
+      --green:  #00ff88;
+      --card-bg:#1a1a2e;
+    }
+
+    /* ══════════════════════════════════════════
+       HERO — cyberpunk grid + particles
+    ══════════════════════════════════════════ */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem 1rem 6rem;
+      overflow: hidden;
+    }
+
+    /* Deep-space radial glow */
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 30%, rgba(249,92,92,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 20% 80%, rgba(0,255,136,0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Cyberpunk grid overlay */
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(249,92,92,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(249,92,92,0.07) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridPulse 8s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    /* Scanline overlay */
+    .hero-scan {
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0,0,0,0.15) 3px,
+        rgba(0,0,0,0.15) 4px
+      );
+      pointer-events: none;
+    }
+
+    @keyframes gridPulse {
+      0%, 100% { opacity: 0.6; }
+      50%       { opacity: 1; }
+    }
+
+    /* Floating particles */
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      animation: float linear infinite;
+      pointer-events: none;
+    }
+    @keyframes float {
+      0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    .hero-content { position: relative; z-index: 2; max-width: 860px; }
+
+    .hero-tag {
+      display: inline-block;
+      border: 1px solid rgba(249,92,92,0.5);
+      color: var(--coral);
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 0.3rem 1rem;
+      border-radius: 2rem;
+      margin-bottom: 1.5rem;
+      background: rgba(249,92,92,0.08);
+    }
+
+    .hero-headline {
+      font-size: clamp(2.8rem, 8vw, 5.5rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff 30%, var(--coral) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.3rem);
+      color: rgba(255,255,255,0.65);
+      max-width: 540px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.6;
+    }
+
+    /* CTA buttons */
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--coral);
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 0.85rem 2.2rem;
+      border-radius: 0.5rem;
+      border: none; cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 0 24px rgba(249,92,92,0.4);
+      text-decoration: none;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 40px rgba(249,92,92,0.65);
+    }
+
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: transparent;
+      color: #fff;
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 0.85rem 2.2rem;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(255,255,255,0.3);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      text-decoration: none;
+    }
+    .btn-outline:hover {
+      border-color: rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.05);
+    }
+
+    /* Challenge refresh note */
+    .challenge-refresh {
+      margin-top: 1.25rem;
+      display: inline-flex; align-items: center; gap: 0.6rem;
+      font-size: 0.82rem;
+      color: var(--gold);
+    }
+
+    /* ══════════════════════════════════════════
+       STICKY STATS BAR
+    ══════════════════════════════════════════ */
+    .stats-bar {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(15,15,35,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(249,92,92,0.2);
+      padding: 0.65rem 1.5rem;
+      display: flex; align-items: center; justify-content: center; gap: 2.5rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      display: flex; align-items: center; gap: 0.45rem;
+      font-size: 0.83rem;
+    }
+    .stat-label { color: rgba(255,255,255,0.5); font-size: 0.72rem; }
+
+    /* XP mini bar */
+    .xp-track {
+      width: 80px; height: 5px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .xp-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--coral), var(--gold));
+      border-radius: 3px;
+      width: 68%;
+    }
+
+    /* Streak fire pulse */
+    .streak-fire { animation: firePulse 1.8s ease-in-out infinite; display: inline-block; }
+    @keyframes firePulse {
+      0%, 100% { transform: scale(1); }
+      50%       { transform: scale(1.25); }
+    }
+
+    /* ══════════════════════════════════════════
+       SECTIONS — shared
+    ══════════════════════════════════════════ */
+    .section { padding: 5rem 1.25rem; max-width: 1200px; margin: 0 auto; }
+    .section-label {
+      font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--coral); margin-bottom: 0.6rem;
+    }
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 800; line-height: 1.1;
+      margin-bottom: 0.75rem;
+    }
+    .section-sub { color: rgba(255,255,255,0.6); font-size: 1.05rem; margin-bottom: 2.5rem; }
+
+    /* ══════════════════════════════════════════
+       GAME MODE CARDS
+    ══════════════════════════════════════════ */
+    .card {
+      background: var(--card-bg);
+      border-radius: 1rem;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 1.75rem;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(249,92,92,0.05) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .card:hover { transform: translateY(-4px); border-color: rgba(249,92,92,0.45); }
+    .card:hover::before { opacity: 1; }
+    .card:hover { box-shadow: 0 8px 40px rgba(249,92,92,0.18), 0 0 0 1px rgba(249,92,92,0.3); }
+
+    .card-icon {
+      font-size: 2.2rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+    }
+    .card-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .card-desc  { font-size: 0.88rem; color: rgba(255,255,255,0.6); margin-bottom: 1.25rem; line-height: 1.5; }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.65rem; border-radius: 2rem;
+    }
+    .badge-popular { background: rgba(255,215,0,0.15); color: var(--gold); border: 1px solid rgba(255,215,0,0.35); }
+    .badge-new     { background: rgba(0,255,136,0.15); color: var(--green); border: 1px solid rgba(0,255,136,0.35); }
+    .badge-hot     { background: rgba(249,92,92,0.15); color: var(--coral); border: 1px solid rgba(249,92,92,0.35); }
+
+    /* Daily challenge timer badge */
+    .timer-badge {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-size: 0.78rem; font-weight: 600;
+      color: var(--gold);
+      background: rgba(255,215,0,0.08);
+      border: 1px solid rgba(255,215,0,0.25);
+      border-radius: 2rem;
+      padding: 0.25rem 0.75rem;
+    }
+
+    /* Mystery reward shimmer */
+    .mystery-box {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, #2a1a4e, #1a2a4e);
+      border: 1px solid rgba(255,215,0,0.4);
+      border-radius: 0.5rem;
+      font-size: 1.4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .mystery-box::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%);
+      animation: shimmer 2s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* ══════════════════════════════════════════
+       LEADERBOARD
+    ══════════════════════════════════════════ */
+    .leaderboard-row {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 0.85rem 1rem;
+      border-radius: 0.6rem;
+      transition: background 0.15s;
+    }
+    .leaderboard-row:hover { background: rgba(255,255,255,0.04); }
+
+    .rank-num {
+      font-size: 0.9rem; font-weight: 700;
+      width: 28px; text-align: center;
+      color: rgba(255,255,255,0.5);
+    }
+    .rank-num.gold   { color: var(--gold); }
+    .rank-num.silver { color: #c0c0c0; }
+    .rank-num.bronze { color: #cd7f32; }
+
+    .avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .player-score {
+      margin-left: auto;
+      font-size: 1rem; font-weight: 700;
+      color: var(--green);
+    }
+
+    /* Your rank card */
+    .your-rank-card {
+      background: rgba(249,92,92,0.08);
+      border: 1px solid rgba(249,92,92,0.3);
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+      display: flex; align-items: center; gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    /* ══════════════════════════════════════════
+       XP RING
+    ══════════════════════════════════════════ */
+    .xp-ring-wrap {
+      position: relative;
+      width: 120px; height: 120px;
+      flex-shrink: 0;
+    }
+    .xp-ring-wrap svg { transform: rotate(-90deg); }
+    .xp-ring-bg  { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 8; }
+    .xp-ring-fg  {
+      fill: none;
+      stroke: url(#ringGrad);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 314;
+      stroke-dashoffset: 100; /* 340/500 = 68% → offset = 314*(1-0.68)=100 */
+      animation: ringFill 1.5s ease-out forwards;
+    }
+    @keyframes ringFill {
+      from { stroke-dashoffset: 314; }
+      to   { stroke-dashoffset: 100; }
+    }
+    .xp-ring-text {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+
+    /* ══════════════════════════════════════════
+       ACHIEVEMENTS
+    ══════════════════════════════════════════ */
+    .achievement {
+      background: var(--card-bg);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 0.85rem;
+      padding: 1.25rem;
+      text-align: center;
+      transition: transform 0.2s, border-color 0.2s;
+      cursor: pointer;
+    }
+    .achievement:hover { transform: translateY(-3px); }
+
+    .achievement.unlocked {
+      border-color: rgba(255,215,0,0.3);
+      box-shadow: 0 0 20px rgba(255,215,0,0.08);
+    }
+    .achievement.unlocked:hover {
+      border-color: rgba(255,215,0,0.6);
+      box-shadow: 0 0 30px rgba(255,215,0,0.2);
+    }
+
+    .achievement.locked { opacity: 0.55; }
+    .achievement.locked .ach-icon { filter: grayscale(1); }
+
+    .ach-icon { font-size: 2.2rem; margin-bottom: 0.5rem; }
+    .ach-name { font-size: 0.82rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .ach-desc { font-size: 0.72rem; color: rgba(255,255,255,0.5); }
+
+    /* Locked shimmer */
+    .ach-locked-overlay {
+      position: relative; overflow: hidden;
+      display: inline-block;
+    }
+    .ach-locked-overlay::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.18) 50%, transparent 70%);
+      animation: shimmer 2.5s ease-in-out infinite;
+    }
+
+    /* ══════════════════════════════════════════
+       SCENARIO SCROLLER
+    ══════════════════════════════════════════ */
+    .scenario-scroll {
+      display: flex; gap: 1rem;
+      overflow-x: auto;
+      padding-bottom: 1rem;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(249,92,92,0.4) transparent;
+    }
+    .scenario-scroll::-webkit-scrollbar { height: 4px; }
+    .scenario-scroll::-webkit-scrollbar-track { background: transparent; }
+    .scenario-scroll::-webkit-scrollbar-thumb { background: rgba(249,92,92,0.4); border-radius: 2px; }
+
+    .scenario-card {
+      flex-shrink: 0;
+      background: var(--card-bg);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 0.85rem;
+      padding: 1.2rem 1.1rem;
+      width: 150px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+    }
+    .scenario-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(249,92,92,0.4);
+      box-shadow: 0 6px 30px rgba(249,92,92,0.14);
+    }
+    .scenario-emoji { font-size: 2rem; margin-bottom: 0.5rem; }
+    .scenario-name  { font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem; line-height: 1.3; }
+
+    /* Difficulty dots */
+    .diff-dots { display: flex; gap: 3px; justify-content: center; margin-bottom: 0.5rem; }
+    .diff-dot  { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.15); }
+    .diff-dot.active { background: var(--coral); }
+
+    /* ══════════════════════════════════════════
+       UNDER THE HOOD
+    ══════════════════════════════════════════ */
+    .hood-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(0,255,136,0.15);
+      border-radius: 1.2rem;
+      padding: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hood-card::before {
+      content: '';
+      position: absolute; top: -40px; right: -40px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(0,255,136,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Animated gear */
+    .gear { animation: spin 12s linear infinite; transform-origin: center; display: inline-block; }
+    .gear-rev { animation: spin 8s linear infinite reverse; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Circuit lines */
+    .circuit-wrap {
+      position: absolute; right: 2rem; top: 50%;
+      transform: translateY(-50%);
+      opacity: 0.15;
+      font-size: 5rem;
+      pointer-events: none;
+    }
+
+    /* Engine stats */
+    .engine-stat {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .engine-stat:last-child { border-bottom: none; }
+    .engine-num {
+      font-size: 1.5rem; font-weight: 800;
+      color: var(--green);
+      min-width: 3.5rem;
+    }
+
+    /* SimVerse badge */
+    .simverse-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(249,92,92,0.08);
+      border: 1px solid rgba(249,92,92,0.25);
+      border-radius: 0.5rem;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.7);
+      margin-top: 1.5rem;
+    }
+    .simverse-dot { width: 8px; height: 8px; background: var(--coral); border-radius: 50%; }
+
+    /* ══════════════════════════════════════════
+       FEEDBACK
+    ══════════════════════════════════════════ */
+    .feedback-section {
+      background: var(--card-bg);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 1.2rem;
+      padding: 2.5rem;
+      text-align: center;
+    }
+
+    .emoji-row { display: flex; justify-content: center; gap: 1.2rem; margin: 1.5rem 0; }
+    .emoji-btn {
+      font-size: 2rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      transition: transform 0.15s, border-color 0.15s, background 0.15s;
+      display: flex; align-items: center; justify-content: center;
+      background: none;
+    }
+    .emoji-btn:hover {
+      transform: scale(1.3);
+      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.05);
+    }
+    .emoji-btn.selected {
+      border-color: var(--coral);
+      background: rgba(249,92,92,0.1);
+      transform: scale(1.25);
+    }
+
+    .feedback-input {
+      width: 100%; max-width: 480px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 0.6rem;
+      padding: 0.75rem 1rem;
+      color: #fff;
+      font-size: 0.9rem;
+      resize: none;
+      transition: border-color 0.15s;
+      font-family: inherit;
+    }
+    .feedback-input::placeholder { color: rgba(255,255,255,0.35); }
+    .feedback-input:focus { outline: none; border-color: rgba(249,92,92,0.5); }
+
+    /* ══════════════════════════════════════════
+       FOOTER
+    ══════════════════════════════════════════ */
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.07);
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+    }
+    footer a {
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    footer a:hover { color: var(--coral); }
+
+    /* ══════════════════════════════════════════
+       ANCHORING TOOLTIP
+    ══════════════════════════════════════════ */
+    .anchor-tip {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(0,255,136,0.08);
+      border: 1px solid rgba(0,255,136,0.2);
+      border-radius: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.82rem;
+      color: var(--green);
+      margin-bottom: 2rem;
+    }
+
+    /* ══════════════════════════════════════════
+       PROGRESS RING (leaderboard section)
+    ══════════════════════════════════════════ */
+    .rank-progress {
+      background: rgba(255,255,255,0.04);
+      border-radius: 0.5rem;
+      height: 6px;
+      margin-top: 0.4rem;
+      overflow: hidden;
+    }
+    .rank-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--coral), var(--gold));
+      border-radius: 3px;
+      width: 34%;
+      animation: progressIn 1.2s ease-out;
+    }
+    @keyframes progressIn {
+      from { width: 0; }
+      to   { width: 34%; }
+    }
+
+    /* ══════════════════════════════════════════
+       UTILITY
+    ══════════════════════════════════════════ */
+    .divider {
+      width: 48px; height: 3px;
+      background: linear-gradient(90deg, var(--coral), transparent);
+      border-radius: 2px;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Glow pulse on streak */
+    .glow-coral { box-shadow: 0 0 12px rgba(249,92,92,0.5); }
+
+    /* Scroll fade-in placeholder (pure CSS) */
+    @media (prefers-reduced-motion: no-preference) {
+      .fade-up {
+        opacity: 0;
+        transform: translateY(24px);
+        animation: fadeUp 0.6s ease forwards;
+      }
+      @keyframes fadeUp {
+        to { opacity: 1; transform: none; }
+      }
+    }
+
+    /* Mobile tweaks */
+    @media (max-width: 640px) {
+      .stats-bar { gap: 1.2rem; }
+      .circuit-wrap { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     HERO
+════════════════════════════════════════════ -->
+<section class="hero" id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-scan"></div>
+
+  <!-- Particles injected by JS -->
+  <div id="particles"></div>
+
+  <div class="hero-content">
+    <div class="hero-tag">⚡ DealSim — The Arena · Beta</div>
+
+    <h1 class="hero-headline">NEGOTIATE.<br>SCORE.<br>DOMINATE.</h1>
+
+    <p class="hero-sub">
+      The flight simulator for real-world negotiations.<br>
+      Train your instincts. Climb the ranks. Never leave money on the table again.
+    </p>
+
+    <!-- Anchoring social proof -->
+    <div class="anchor-tip">
+      <span>📊</span>
+      <span>Top players average <strong style="color:#fff">82/100</strong> — where will you land?</span>
+    </div>
+
+    <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+      <a href="#modes" class="btn-primary">
+        ⚡ Quick Match
+      </a>
+      <a href="#modes" class="btn-outline">
+        Full Simulation →
+      </a>
+    </div>
+
+    <div class="challenge-refresh">
+      🕐 New challenge every day
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     STICKY STATS BAR
+════════════════════════════════════════════ -->
+<div class="stats-bar">
+  <div class="stat-pill">
+    <span class="streak-fire">🔥</span>
+    <div>
+      <div style="font-weight:700; font-size:0.9rem;">7-day streak</div>
+      <div class="stat-label">7 days strong</div>
+    </div>
+  </div>
+
+  <div class="stat-pill">
+    <div>
+      <div style="display:flex; align-items:center; gap:0.5rem;">
+        <span style="font-weight:700; font-size:0.9rem;">Level 4</span>
+        <span style="font-size:0.75rem; color:rgba(255,215,0,0.8);">340 / 500 XP</span>
+      </div>
+      <div class="xp-track" style="margin-top:4px;">
+        <div class="xp-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-pill">
+    <div>
+      <div style="font-weight:700; font-size:0.9rem; color:var(--green);">68%</div>
+      <div class="stat-label">Win Rate</div>
+    </div>
+  </div>
+
+  <div class="stat-pill">
+    <div>
+      <div style="font-weight:700; font-size:0.9rem;">47</div>
+      <div class="stat-label">Negotiations</div>
+    </div>
+  </div>
+
+  <a href="#modes" class="btn-primary" style="font-size:0.82rem; padding:0.5rem 1.2rem;">
+    Play Now
+  </a>
+</div>
+
+<!-- ════════════════════════════════════════════
+     GAME MODES
+════════════════════════════════════════════ -->
+<section class="section" id="modes">
+  <div class="section-label">Choose Your Battle</div>
+  <h2 class="section-title">Game Modes</h2>
+  <div class="divider"></div>
+
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1.25rem;">
+
+    <!-- Quick Match -->
+    <div class="card">
+      <div class="card-icon">⚡</div>
+      <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.4rem;">
+        <div class="card-title">Quick Match</div>
+        <span class="badge badge-popular">Most Popular</span>
+      </div>
+      <div class="card-desc">
+        60-second negotiation sprint. Jump in, score instantly, see where you rank. No setup, no fluff.
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-size:0.78rem; color:rgba(255,255,255,0.45);">Avg. score: 74/100 · 60s</div>
+        <span style="font-size:1.3rem;">🏃</span>
+      </div>
+      <div style="margin-top:1rem; height:1px; background:rgba(255,255,255,0.06);"></div>
+      <div style="margin-top:1rem;">
+        <a href="#" class="btn-primary" style="font-size:0.85rem; padding:0.6rem 1.5rem;">Play →</a>
+      </div>
+    </div>
+
+    <!-- Ranked Match -->
+    <div class="card">
+      <div style="position:absolute; top:1rem; right:1rem;">
+        <span class="badge badge-hot">Ranked</span>
+      </div>
+      <div class="card-icon">🏆</div>
+      <div class="card-title" style="margin-bottom:0.4rem;">Ranked Match</div>
+      <div class="card-desc">
+        Full simulation. Real stakes. Your performance affects your global rating. Opponents adapt to your moves.
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-size:0.78rem; color:rgba(255,255,255,0.45);">Avg. 8 minutes · affects rating</div>
+        <span style="font-size:1.3rem;">📈</span>
+      </div>
+      <div style="margin-top:1rem; height:1px; background:rgba(255,255,255,0.06);"></div>
+      <div style="margin-top:1rem;">
+        <a href="#" class="btn-outline" style="font-size:0.85rem; padding:0.6rem 1.5rem;">Enter Ranked →</a>
+      </div>
+    </div>
+
+    <!-- Daily Challenge -->
+    <div class="card" style="border-color:rgba(255,215,0,0.25); box-shadow:0 0 30px rgba(255,215,0,0.06);">
+      <div style="position:absolute; top:1rem; right:1rem;">
+        <span class="badge badge-popular" style="border-color:rgba(255,215,0,0.5); color:var(--gold); background:rgba(255,215,0,0.12);">+2× XP</span>
+      </div>
+      <div class="card-icon">🎯</div>
+      <div class="card-title" style="margin-bottom:0.4rem;">Daily Challenge</div>
+      <div class="card-desc">
+        A hand-crafted scenario drops every 24h. Bonus XP. Mystery reward. Available to everyone — for today only.
+      </div>
+
+      <!-- Variable reward mystery box -->
+      <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+        <div class="mystery-box">?</div>
+        <div>
+          <div style="font-size:0.8rem; font-weight:600; color:var(--gold);">Mystery Reward</div>
+          <div style="font-size:0.72rem; color:rgba(255,255,255,0.45);">Complete to unlock</div>
+        </div>
+      </div>
+
+      <div class="timer-badge">
+        🕐 New challenge every day
+      </div>
+
+      <div style="margin-top:1rem; height:1px; background:rgba(255,255,255,0.06);"></div>
+      <div style="margin-top:1rem;">
+        <a href="#" class="btn-primary" style="font-size:0.85rem; padding:0.6rem 1.5rem; background:linear-gradient(135deg, #d4a017, var(--gold)); box-shadow:0 0 20px rgba(255,215,0,0.3);">Accept Challenge →</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     LEADERBOARD
+════════════════════════════════════════════ -->
+<section style="padding: 0 1.25rem 5rem; max-width:1200px; margin:0 auto;" id="leaderboard">
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:start;" class="lb-grid">
+
+    <div>
+      <div class="section-label">Global Rankings</div>
+      <h2 class="section-title" style="margin-bottom:0.4rem;">Leaderboard</h2>
+      <p class="section-sub">The top negotiators, live.</p>
+
+      <div style="background:var(--card-bg); border:1px solid rgba(255,255,255,0.08); border-radius:1rem; padding:0.5rem 0.25rem;">
+
+        <div class="leaderboard-row">
+          <div class="rank-num gold">1</div>
+          <div class="avatar" style="background:linear-gradient(135deg,#f7c948,#e07b00);">S</div>
+          <div>
+            <div style="font-weight:700; font-size:0.9rem;">ShadowBargain</div>
+            <div style="font-size:0.72rem; color:rgba(255,255,255,0.45);">🇩🇪 · Ranked Shark</div>
+          </div>
+          <div class="player-score">98</div>
+          <span class="badge badge-popular" style="margin-left:0.25rem;">👑</span>
+        </div>
+
+        <div class="leaderboard-row">
+          <div class="rank-num silver">2</div>
+          <div class="avatar" style="background:linear-gradient(135deg,#a0a0b0,#606070);">R</div>
+          <div>
+            <div style="font-weight:700; font-size:0.9rem;">RavenClose</div>
+            <div style="font-size:0.72rem; color:rgba(255,255,255,0.45);">🇺🇸 · Iron Will</div>
+          </div>
+          <div class="player-score">95</div>
+        </div>
+
+        <div class="leaderboard-row">
+          <div class="rank-num bronze">3</div>
+          <div class="avatar" style="background:linear-gradient(135deg,#cd9b4e,#8b5e1e);">T</div>
+          <div>
+            <div style="font-weight:700; font-size:0.9rem;">TacticalMilos</div>
+            <div style="font-size:0.72rem; color:rgba(255,255,255,0.45);">🇸🇬 · Speed Demon</div>
+          </div>
+          <div class="player-score">93</div>
+        </div>
+
+        <div class="leaderboard-row">
+          <div class="rank-num">4</div>
+          <div class="avatar" style="background:linear-gradient(135deg,#5c5c8e,#2e2e5e);">A</div>
+          <div>
+            <div style="font-weight:700; font-size:0.9rem;">AnchorQueen</div>
+            <div style="font-size:0.72rem; color:rgba(255,255,255,0.45);">🇬🇧 · Perfectionist</div>
+          </div>
+          <div class="player-score">91</div>
+        </div>
+
+        <div class="leaderboard-row">
+          <div class="rank-num">5</div>
+          <div class="avatar" style="background:linear-gradient(135deg,#2e6e4e,#0e3e2e);">V</div>
+          <div>
+            <div style="font-weight:700; font-size:0.9rem;">VetoKing</div>
+            <div style="font-size:0.72rem; color:rgba(255,255,255,0.45);">🇮🇳 · Comeback Kid</div>
+          </div>
+          <div class="player-score">89</div>
+        </div>
+
+      </div>
+
+      <!-- Your rank -->
+      <div class="your-rank-card">
+        <div style="font-size:1.5rem;">🎮</div>
+        <div style="flex:1;">
+          <div style="font-size:0.78rem; color:rgba(255,255,255,0.5); margin-bottom:0.2rem;">Your Rank</div>
+          <div style="font-weight:700;">#247 <span style="color:rgba(255,255,255,0.5); font-weight:400;">of 3,102</span></div>
+          <div style="font-size:0.75rem; color:rgba(255,255,255,0.45); margin-top:0.2rem;">34 pts to #200</div>
+          <div class="rank-progress">
+            <div class="rank-progress-fill"></div>
+          </div>
+        </div>
+        <a href="#modes" class="btn-outline" style="font-size:0.78rem; padding:0.4rem 0.9rem; white-space:nowrap;">Climb →</a>
+      </div>
+    </div>
+
+    <!-- XP ring + level block -->
+    <div>
+      <div class="section-label">Your Progress</div>
+      <h2 class="section-title" style="margin-bottom:0.4rem;">Level Up</h2>
+      <p class="section-sub">68% to the next level.</p>
+
+      <div style="background:var(--card-bg); border:1px solid rgba(255,255,255,0.08); border-radius:1rem; padding:2rem; display:flex; gap:2rem; align-items:center; flex-wrap:wrap;">
+
+        <div class="xp-ring-wrap">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <defs>
+              <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#f95c5c"/>
+                <stop offset="100%" stop-color="#ffd700"/>
+              </linearGradient>
+            </defs>
+            <circle class="xp-ring-bg" cx="60" cy="60" r="50"/>
+            <circle class="xp-ring-fg" cx="60" cy="60" r="50"/>
+          </svg>
+          <div class="xp-ring-text">
+            <div style="font-size:1.4rem; font-weight:800;">4</div>
+            <div style="font-size:0.68rem; color:rgba(255,255,255,0.5);">LEVEL</div>
+          </div>
+        </div>
+
+        <div style="flex:1; min-width:150px;">
+          <div style="font-size:2rem; font-weight:800; color:var(--gold);">340 <span style="font-size:1rem; font-weight:400; color:rgba(255,255,255,0.5);">/ 500 XP</span></div>
+          <div style="font-size:0.82rem; color:rgba(255,255,255,0.5); margin-top:0.25rem; margin-bottom:1.25rem;">160 XP to Level 5</div>
+          <div style="display:flex; flex-direction:column; gap:0.5rem;">
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+              <span style="color:rgba(255,255,255,0.5);">Win Rate</span>
+              <span style="font-weight:700; color:var(--green);">68%</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+              <span style="color:rgba(255,255,255,0.5);">Avg Score</span>
+              <span style="font-weight:700;">76 / 100</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+              <span style="color:rgba(255,255,255,0.5);">Negotiations</span>
+              <span style="font-weight:700;">47</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+              <span style="color:rgba(255,255,255,0.5);">Best Score</span>
+              <span style="font-weight:700; color:var(--gold);">94 / 100 🏆</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     ACHIEVEMENTS
+════════════════════════════════════════════ -->
+<section class="section" id="achievements">
+  <div class="section-label">Milestones</div>
+  <h2 class="section-title">Achievements</h2>
+  <div class="divider"></div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:1rem;">
+
+    <div class="achievement unlocked">
+      <div class="ach-icon">🩸</div>
+      <div class="ach-name">First Blood</div>
+      <div class="ach-desc">Completed your first negotiation</div>
+      <div style="margin-top:0.6rem; font-size:0.7rem; color:var(--gold);">✓ Unlocked</div>
+    </div>
+
+    <div class="achievement unlocked">
+      <div class="ach-icon">🦈</div>
+      <div class="ach-name">Shark</div>
+      <div class="ach-desc">Score 90+ on any negotiation</div>
+      <div style="margin-top:0.6rem; font-size:0.7rem; color:var(--gold);">✓ Unlocked</div>
+    </div>
+
+    <div class="achievement unlocked">
+      <div class="ach-icon">🔄</div>
+      <div class="ach-name">Comeback Kid</div>
+      <div class="ach-desc">Win after a weak opening offer</div>
+      <div style="margin-top:0.6rem; font-size:0.7rem; color:var(--gold);">✓ Unlocked</div>
+    </div>
+
+    <div class="achievement locked">
+      <div class="ach-locked-overlay">
+        <div class="ach-icon" style="filter:grayscale(1) brightness(0.5);">🧱</div>
+      </div>
+      <div class="ach-name">Iron Will</div>
+      <div class="ach-desc">Never concede first in 10 matches</div>
+      <div style="margin-top:0.6rem; font-size:0.7rem; color:rgba(255,255,255,0.3);">? Locked</div>
+    </div>
+
+    <div class="achievement locked">
+      <div class="ach-locked-overlay">
+        <div class="ach-icon" style="filter:grayscale(1) brightness(0.5);">⚡</div>
+      </div>
+      <div class="ach-name">Speed Demon</div>
+      <div class="ach-desc">Close a deal in under 2 minutes</div>
+      <div style="margin-top:0.6rem; font-size:0.7rem; color:rgba(255,255,255,0.3);">? Locked</div>
+    </div>
+
+    <div class="achievement locked">
+      <div class="ach-locked-overlay">
+        <div class="ach-icon" style="filter:grayscale(1) brightness(0.5);">💯</div>
+      </div>
+      <div class="ach-name">Perfectionist</div>
+      <div class="ach-desc">Score 100/100 on any simulation</div>
+      <div style="margin-top:0.6rem; font-size:0.7rem; color:rgba(255,255,255,0.3);">? Locked</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SCENARIO SELECTOR
+════════════════════════════════════════════ -->
+<section class="section" style="padding-top:0;" id="scenarios">
+  <div class="section-label">Pick Your Arena</div>
+  <h2 class="section-title">Scenarios</h2>
+  <p class="section-sub">10 real-world battlegrounds. Each one distinct.</p>
+
+  <div class="scenario-scroll">
+
+    <div class="scenario-card" style="border-color:rgba(255,215,0,0.3);">
+      <div class="scenario-emoji">💼</div>
+      <div class="scenario-name">Salary Negotiation</div>
+      <div class="diff-dots">
+        <div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot"></div><div class="diff-dot"></div>
+      </div>
+      <span class="badge badge-popular" style="font-size:0.62rem;">Most Popular</span>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-emoji">💻</div>
+      <div class="scenario-name">Freelance Rate</div>
+      <div class="diff-dots">
+        <div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot"></div><div class="diff-dot"></div><div class="diff-dot"></div>
+      </div>
+      <span class="badge badge-new" style="font-size:0.62rem;">New</span>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-emoji">🏠</div>
+      <div class="scenario-name">Rent Negotiation</div>
+      <div class="diff-dots">
+        <div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot"></div><div class="diff-dot"></div><div class="diff-dot"></div>
+      </div>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-emoji">🏥</div>
+      <div class="scenario-name">Medical Bill</div>
+      <div class="diff-dots">
+        <div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot"></div>
+      </div>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-emoji">🚗</div>
+      <div class="scenario-name">Car Buying</div>
+      <div class="diff-dots">
+        <div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot"></div><div class="diff-dot"></div>
+      </div>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-emoji">📋</div>
+      <div class="scenario-name">Scope Creep</div>
+      <div class="diff-dots">
+        <div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot"></div>
+      </div>
+      <span class="badge badge-hot" style="font-size:0.62rem;">Trending</span>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-emoji">📈</div>
+      <div class="scenario-name">Raise Request</div>
+      <div class="diff-dots">
+        <div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot"></div><div class="diff-dot"></div>
+      </div>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-emoji">🤝</div>
+      <div class="scenario-name">Vendor Deal</div>
+      <div class="diff-dots">
+        <div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot active"></div>
+      </div>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-emoji">🔄</div>
+      <div class="scenario-name">Counter Offer</div>
+      <div class="diff-dots">
+        <div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot"></div><div class="diff-dot"></div>
+      </div>
+      <span class="badge badge-new" style="font-size:0.62rem;">New</span>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-emoji">💰</div>
+      <div class="scenario-name">Budget Request</div>
+      <div class="diff-dots">
+        <div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot active"></div><div class="diff-dot"></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     UNDER THE HOOD
+════════════════════════════════════════════ -->
+<section class="section" style="padding-top:0;" id="engine">
+  <div class="section-label">Sim Engine</div>
+  <h2 class="section-title">Under The Hood</h2>
+  <div class="divider"></div>
+
+  <div class="hood-card">
+    <div class="circuit-wrap" aria-hidden="true">⚙</div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:center;">
+
+      <div>
+        <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
+          <span class="gear" style="font-size:2.5rem;">⚙️</span>
+          <span class="gear-rev" style="font-size:1.5rem; opacity:0.6;">⚙️</span>
+          <div>
+            <div style="font-weight:800; font-size:1.1rem;">Rule-Based Sim Core</div>
+            <div style="font-size:0.8rem; color:rgba(255,255,255,0.5);">v0.4.1 · Python backend</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="engine-stat">
+            <div class="engine-num">5</div>
+            <div>
+              <div style="font-weight:600; font-size:0.9rem;">Negotiation Styles</div>
+              <div style="font-size:0.75rem; color:rgba(255,255,255,0.45);">Competitive, Collaborative, Avoiding, Accommodating, Compromising</div>
+            </div>
+          </div>
+          <div class="engine-stat">
+            <div class="engine-num">22</div>
+            <div>
+              <div style="font-weight:600; font-size:0.9rem;">Opponent Personas</div>
+              <div style="font-size:0.75rem; color:rgba(255,255,255,0.45);">From soft pushback to hard-nosed anchoring</div>
+            </div>
+          </div>
+          <div class="engine-stat">
+            <div class="engine-num">6</div>
+            <div>
+              <div style="font-weight:600; font-size:0.9rem;">Scoring Dimensions</div>
+              <div style="font-size:0.75rem; color:rgba(255,255,255,0.45);">Outcome, strategy, rapport, timing, anchoring, recovery</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="simverse-badge">
+          <div class="simverse-dot"></div>
+          Part of <strong style="color:#fff; margin:0 0.3rem;">SimVerse</strong> — 10 AI simulation products
+        </div>
+      </div>
+
+      <div>
+        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(0,255,136,0.15); border-radius:0.75rem; padding:1.25rem; font-family:monospace; font-size:0.78rem; color:rgba(0,255,136,0.8); line-height:1.7;">
+          <div style="color:rgba(0,255,136,0.4); margin-bottom:0.5rem;"># sim_core v0.4.1</div>
+          <div><span style="color:rgba(255,215,0,0.7);">styles</span>  = [<span style="color:var(--coral);">"competitive"</span>, ...]</div>
+          <div><span style="color:rgba(255,215,0,0.7);">personas</span> = <span style="color:var(--green);">22</span></div>
+          <div><span style="color:rgba(255,215,0,0.7);">scoring</span>  = <span style="color:var(--green);">6</span> dimensions</div>
+          <div style="margin-top:0.5rem;"><span style="color:rgba(0,255,136,0.4);">&gt;</span> score = engine.run(</div>
+          <div style="padding-left:1rem;"><span style="color:rgba(255,215,0,0.7);">scenario</span>=<span style="color:var(--coral);">"salary"</span>,</div>
+          <div style="padding-left:1rem;"><span style="color:rgba(255,215,0,0.7);">user_moves</span>=moves</div>
+          <div>)</div>
+          <div style="margin-top:0.5rem;"><span style="color:rgba(0,255,136,0.4);">&gt;</span> score → <span style="color:var(--gold); font-weight:700;">82 / 100</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     FEEDBACK
+════════════════════════════════════════════ -->
+<section class="section" style="padding-top:0;" id="feedback">
+  <div class="feedback-section">
+    <div class="section-label" style="text-align:center;">Beta Feedback</div>
+    <h2 class="section-title" style="text-align:center; margin-bottom:0.5rem;">Help Us Improve the Sim</h2>
+    <p style="color:rgba(255,255,255,0.55); font-size:0.95rem;">Your feedback shapes the next version.</p>
+
+    <div class="emoji-row">
+      <button class="emoji-btn" onclick="selectEmoji(this)" title="Love it">😍</button>
+      <button class="emoji-btn" onclick="selectEmoji(this)" title="Like it">😊</button>
+      <button class="emoji-btn" onclick="selectEmoji(this)" title="It's okay">😐</button>
+      <button class="emoji-btn" onclick="selectEmoji(this)" title="Not great">😕</button>
+      <button class="emoji-btn" onclick="selectEmoji(this)" title="Frustrated">😤</button>
+    </div>
+
+    <div style="display:flex; flex-direction:column; align-items:center; gap:0.75rem;">
+      <textarea class="feedback-input" rows="3" placeholder="What would make this more useful? (optional)"></textarea>
+      <button class="btn-primary" style="align-self:center;" onclick="submitFeedback(this)">
+        Send Feedback
+      </button>
+      <div id="feedback-thanks" style="display:none; color:var(--green); font-size:0.85rem; font-weight:600;">
+        ✓ Thanks — this goes straight to the build queue.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════ -->
+<footer>
+  <div style="font-size:1.3rem; margin-bottom:0.75rem;">⚔️</div>
+  <div style="font-weight:700; margin-bottom:0.25rem;">DealSim</div>
+  <div style="color:rgba(255,255,255,0.45); font-size:0.82rem; margin-bottom:1rem;">
+    Product #1 of SimVerse — 10 AI simulation products
+  </div>
+  <div style="display:flex; gap:1.5rem; justify-content:center; flex-wrap:wrap; font-size:0.82rem; margin-bottom:1.5rem;">
+    <a href="/static/privacy.html">Privacy</a>
+    <a href="#feedback">Feedback</a>
+    <a href="#engine">About the Sim</a>
+    <a href="mailto:hello@simverse.io">Contact</a>
+  </div>
+  <div style="color:rgba(255,255,255,0.3); font-size:0.75rem;">
+    Built with ❤️ and behavioral science · SimVerse © 2025
+  </div>
+</footer>
+
+<!-- ════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════ -->
+<script>
+  /* ── Particles ── */
+  (function spawnParticles() {
+    const container = document.getElementById('particles');
+    const colors = ['rgba(249,92,92,0.6)', 'rgba(0,255,136,0.4)', 'rgba(255,215,0,0.35)', 'rgba(255,255,255,0.3)'];
+    for (let i = 0; i < 22; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 3 + 1.5;
+      p.style.cssText = `
+        width:${size}px; height:${size}px;
+        background:${colors[Math.floor(Math.random() * colors.length)]};
+        left:${Math.random() * 100}%;
+        animation-duration:${12 + Math.random() * 16}s;
+        animation-delay:${-Math.random() * 20}s;
+      `;
+      container.appendChild(p);
+    }
+  })();
+
+
+  /* ── Emoji feedback ── */
+  function selectEmoji(btn) {
+    document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  }
+
+  /* ── Feedback submit ── */
+  function submitFeedback(btn) {
+    btn.textContent = 'Sending…';
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.style.display = 'none';
+      document.getElementById('feedback-thanks').style.display = 'block';
+    }, 900);
+  }
+
+  /* ── Leaderboard grid responsive ── */
+  (function fixLbGrid() {
+    const grid = document.querySelector('.lb-grid');
+    if (!grid) return;
+    function check() {
+      grid.style.gridTemplateColumns = window.innerWidth < 768 ? '1fr' : '1fr 1fr';
+    }
+    check();
+    window.addEventListener('resize', check);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DealSim — Negotiation Intelligence Platform</title>
+<link rel="stylesheet" href="/tailwind.out.css" />
+<link rel="stylesheet" href="/themes.css" />
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text-dim: #8b949e;
+    --cyan: #58a6ff;
+    --orange: #f0883e;
+    --green: #3fb950;
+    --red: #f85149;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0;
+  }
+  .mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .btn-outline {
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+    background: transparent;
+    padding: 8px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-outline:hover { background: rgba(88,166,255,0.1); }
+  .btn-solid {
+    background: var(--cyan);
+    color: #0d1117;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: opacity 0.15s;
+  }
+  .btn-solid:hover { opacity: 0.85; }
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .cyan { color: var(--cyan); }
+  .orange { color: var(--orange); }
+  .green { color: var(--green); }
+  .dim { color: var(--text-dim); }
+
+  /* Terminal block */
+  .terminal {
+    background: #010409;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+  }
+  .terminal-line { display: flex; gap: 8px; line-height: 1.8; }
+  .prompt { color: var(--green); }
+  .t-key { color: var(--cyan); }
+  .t-val { color: var(--orange); }
+  .t-comment { color: var(--text-dim); }
+
+  /* Nav */
+  nav {
+    background: rgba(13,17,23,0.95);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+  nav .inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+  }
+  .nav-logo { display: flex; align-items: center; gap: 10px; }
+  .nav-logo-mark {
+    width: 28px; height: 28px;
+    background: var(--cyan);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; color: #0d1117;
+  }
+  .nav-links { display: flex; gap: 24px; align-items: center; }
+  .nav-links a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 13px;
+    transition: color 0.15s;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-badge {
+    font-size: 10px;
+    background: rgba(88,166,255,0.15);
+    color: var(--cyan);
+    border: 1px solid rgba(88,166,255,0.3);
+    padding: 1px 6px;
+    border-radius: 10px;
+    margin-left: 6px;
+  }
+
+  /* Market bar */
+  .market-bar {
+    background: #010409;
+    border-bottom: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+  }
+  .market-bar .inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+  }
+  .market-metric {
+    flex: 1;
+    padding: 0 20px;
+    border-right: 1px solid var(--border);
+  }
+  .market-metric:first-child { padding-left: 0; }
+  .market-metric:last-child { border-right: none; }
+  .metric-value { font-size: 20px; font-weight: 600; color: var(--cyan); font-family: 'SFMono-Regular', Consolas, monospace; }
+  .metric-label { font-size: 12px; color: var(--text-dim); margin-top: 1px; }
+  .metric-delta { font-size: 11px; color: var(--green); margin-top: 2px; }
+
+  /* Sliders */
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--cyan);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--cyan);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+  }
+
+  /* Difficulty dots */
+  .dots { display: flex; gap: 4px; }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+  .dot.filled { background: var(--orange); }
+  .dot.filled.hard { background: var(--red); }
+
+  /* Flow diagram */
+  .flow-box {
+    background: #010409;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    min-width: 140px;
+    text-align: center;
+    position: relative;
+  }
+  .flow-box.active-box { border-color: var(--cyan); box-shadow: 0 0 0 1px rgba(88,166,255,0.2); }
+  .flow-arrow {
+    display: flex; align-items: center; color: var(--text-dim); font-size: 18px;
+    padding: 0 4px;
+  }
+
+  /* Score gauge */
+  .gauge-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .gauge-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--cyan), var(--green));
+    transition: width 0.4s ease;
+  }
+
+  /* Radar chart */
+  .radar-container { position: relative; width: 200px; height: 200px; margin: 0 auto; }
+
+  /* CSS bar chart */
+  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 80px; }
+  .bar-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+  .bar-rect {
+    width: 100%;
+    background: rgba(88,166,255,0.4);
+    border-radius: 3px 3px 0 0;
+    border: 1px solid rgba(88,166,255,0.6);
+    transition: background 0.2s;
+    min-height: 4px;
+  }
+  .bar-rect.latest { background: var(--cyan); border-color: var(--cyan); }
+  .bar-label { font-size: 10px; color: var(--text-dim); }
+
+  /* Section max-width wrapper */
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  /* Scenario card grid */
+  .scenario-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+
+  /* Tag badges */
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  .tag-blue { background: rgba(88,166,255,0.12); color: var(--cyan); border: 1px solid rgba(88,166,255,0.25); }
+  .tag-orange { background: rgba(240,136,62,0.12); color: var(--orange); border: 1px solid rgba(240,136,62,0.25); }
+  .tag-green { background: rgba(63,185,80,0.12); color: var(--green); border: 1px solid rgba(63,185,80,0.25); }
+  .tag-dim { background: rgba(139,148,158,0.12); color: var(--text-dim); border: 1px solid rgba(139,148,158,0.2); }
+
+  /* Divider */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+
+  /* Engine state machine nodes */
+  .state-node {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    border: 1px solid var(--border);
+    text-align: center;
+    user-select: none;
+  }
+  .state-node:hover { border-color: var(--cyan); background: rgba(88,166,255,0.06); }
+  .state-node.active-state { border-color: var(--cyan); background: rgba(88,166,255,0.1); color: var(--cyan); }
+
+  /* Expandable advanced section */
+  .advanced-body { display: none; }
+  .advanced-body.open { display: block; }
+  .expand-toggle { cursor: pointer; user-select: none; }
+  .expand-icon { transition: transform 0.2s; display: inline-block; }
+  .expand-icon.rotated { transform: rotate(90deg); }
+
+  /* Scroll animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.4s ease forwards; }
+
+  /* Tool card preview */
+  .tool-preview {
+    background: #010409;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 12px;
+    margin-top: 12px;
+  }
+  .preview-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .preview-bar { height: 4px; border-radius: 2px; background: var(--border); margin-bottom: 6px; overflow: hidden; }
+  .preview-fill { height: 100%; border-radius: 2px; background: var(--cyan); }
+
+  /* Dropdown */
+  select {
+    background: #010409;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 13px;
+    width: 100%;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b949e' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+  select:focus { border-color: var(--cyan); }
+
+  /* Input */
+  input[type=text], input[type=number] {
+    background: #010409;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 13px;
+    width: 100%;
+    outline: none;
+  }
+  input[type=text]:focus, input[type=number]:focus { border-color: var(--cyan); }
+  textarea {
+    background: #010409;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 13px;
+    width: 100%;
+    outline: none;
+    resize: vertical;
+    font-family: inherit;
+  }
+  textarea:focus { border-color: var(--cyan); }
+
+  /* Opponent persona card */
+  .persona-card {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    background: #010409;
+  }
+  .persona-style-bar { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+
+  /* Hidden state reveal */
+  .hidden-state {
+    background: rgba(240,136,62,0.04);
+    border: 1px solid rgba(240,136,62,0.2);
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .market-bar .inner { flex-direction: column; gap: 12px; }
+    .market-metric { border-right: none; border-bottom: 1px solid var(--border); padding: 0 0 12px 0; }
+    .market-metric:last-child { border-bottom: none; }
+    .sim-split { flex-direction: column !important; }
+    .nav-links .hide-mobile { display: none; }
+  }
+
+  /* Blinking cursor */
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .cursor { display: inline-block; width: 8px; height: 14px; background: var(--cyan); animation: blink 1.1s step-end infinite; vertical-align: middle; margin-left: 2px; }
+
+  /* Section spacing */
+  section { padding: 64px 0; }
+  section + section { border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="inner">
+    <div class="nav-logo">
+      <div class="nav-logo-mark">DS</div>
+      <span style="font-weight:600;font-size:15px;">DealSim</span>
+      <span class="nav-badge mono">v0.1.0</span>
+    </div>
+    <div class="nav-links">
+      <a href="#engine" class="hide-mobile">How It Works</a>
+      <a href="#tools" class="hide-mobile">Free Tools</a>
+      <a href="#scenarios" class="hide-mobile">Scenarios</a>
+      <a href="#analytics" class="hide-mobile">Analytics</a>
+      <a href="#feedback" class="hide-mobile">Contribute</a>
+      <button class="btn-outline" style="padding:6px 14px;font-size:13px;">Launch Simulation</button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section style="padding:80px 0 64px;">
+  <div class="wrap">
+    <div style="max-width:680px;">
+      <div class="section-label" style="margin-bottom:12px;">Negotiation Intelligence Platform</div>
+      <h1 style="font-size:clamp(28px,4vw,48px);font-weight:700;line-height:1.2;margin:0 0 16px;color:#e6edf3;">
+        Simulate. Analyze.<br>Negotiate with precision.
+      </h1>
+      <p style="font-size:16px;color:var(--text-dim);max-width:520px;margin:0 0 28px;line-height:1.7;">
+        A rule-based simulation engine with transparent scoring, market benchmarks, and personalized analytics. No black boxes. No AI-generated responses.
+      </p>
+
+      <!-- Terminal snippet -->
+      <div class="terminal mono" style="margin-bottom:28px;font-size:13px;">
+        <div class="terminal-line"><span class="prompt">$</span><span class="t-key">dealsim</span> <span class="t-val">init</span> <span class="t-comment">--scenario salary_negotiation</span></div>
+        <div class="terminal-line" style="color:var(--text-dim);">  <span class="t-key">opponent</span>: <span class="t-val">competitive_style</span> <span class="t-comment">(difficulty: 0.7)</span></div>
+        <div class="terminal-line" style="color:var(--text-dim);">  <span class="t-key">scoring</span>: <span class="t-val">6 dimensions</span> <span class="t-comment">× 10 rounds</span></div>
+        <div class="terminal-line" style="color:var(--text-dim);">  <span class="t-key">engine</span>: <span class="t-val">DealSim v0.1.0</span> <span class="t-comment">/ SimVerse</span></div>
+        <div class="terminal-line" style="margin-top:4px;"><span class="prompt">▶</span> <span style="color:var(--green);">Simulation ready.</span><span class="cursor"></span></div>
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn-outline" style="padding:10px 24px;font-size:14px;">Launch Simulation →</button>
+        <button class="btn-solid" style="padding:10px 24px;font-size:14px;">Analyze an Offer</button>
+      </div>
+      <p style="margin-top:16px;font-size:12px;color:var(--text-dim);">
+        Powered by <span style="color:var(--cyan);">SimVerse</span> — Open simulation infrastructure.
+        <span style="margin-left:12px;">Used by career coaches, HR professionals, and negotiation trainers.</span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- MARKET INTELLIGENCE BAR -->
+<div class="market-bar">
+  <div class="inner">
+    <div class="market-metric">
+      <div class="section-label">Software Engineer · SF</div>
+      <div class="metric-value">$165,000</div>
+      <div class="metric-label">Average base salary (P50)</div>
+      <div class="metric-delta">↑ Range: $140k – $195k (P25–P75)</div>
+    </div>
+    <div class="market-metric">
+      <div class="section-label">Median Signing Bonus</div>
+      <div class="metric-value">$15,000</div>
+      <div class="metric-label">Tech sector, US market</div>
+      <div class="metric-delta">↑ Top quartile: $25k+</div>
+    </div>
+    <div class="market-metric">
+      <div class="section-label">Negotiation Success Rate</div>
+      <div class="metric-value">73%</div>
+      <div class="metric-label">Of those who counter-offer</div>
+      <div class="metric-delta">↑ 12% higher than 2024</div>
+    </div>
+    <div class="market-metric">
+      <div class="section-label">Avg. Value Gained</div>
+      <div class="metric-value">$12,400</div>
+      <div class="metric-label">Per negotiation event</div>
+      <div class="metric-delta">Based on 50,000+ data points · 2026</div>
+    </div>
+  </div>
+</div>
+<div style="text-align:right;max-width:1200px;margin:0 auto;padding:6px 24px;">
+  <span style="font-size:11px;color:var(--text-dim);">2026 market data compiled from Levels.fyi, Glassdoor, Blind, LinkedIn Salary — updated quarterly</span>
+</div>
+
+<!-- SIMULATION CONSOLE -->
+<section id="console">
+  <div class="wrap">
+    <div class="section-label">Simulation Console</div>
+    <h2 style="font-size:24px;font-weight:700;margin:4px 0 8px;color:#e6edf3;">Configure &amp; Launch</h2>
+    <p style="color:var(--text-dim);margin:0 0 28px;">Shape the simulation parameters before you begin. Every variable is visible and adjustable.</p>
+
+    <div class="sim-split" style="display:flex;gap:16px;align-items:stretch;">
+
+      <!-- LEFT: Config panel -->
+      <div class="card" style="flex:1;padding:24px;min-width:0;">
+        <div style="margin-bottom:20px;">
+          <label class="section-label" style="display:block;margin-bottom:6px;">Scenario</label>
+          <select id="scenario-select" onchange="updatePreview()">
+            <option value="salary">Salary Negotiation · Competitive</option>
+            <option value="offer">Job Offer — Counter-offer</option>
+            <option value="rent">Rent Reduction</option>
+            <option value="freelance">Freelance Rate Increase</option>
+            <option value="vendor">Vendor Contract Renewal</option>
+            <option value="raise">Annual Raise Request</option>
+            <option value="equity">Equity Re-negotiation</option>
+            <option value="severance">Severance Package</option>
+            <option value="partnership">Partnership Terms</option>
+            <option value="acquisition">Acquisition Offer</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <label class="section-label" style="display:block;margin-bottom:6px;">Your Target Value</label>
+          <input type="text" placeholder="e.g. $185,000 / year" id="target-input" oninput="updatePreview()">
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <label class="section-label" style="margin-bottom:0;">Opponent Difficulty</label>
+            <span class="mono" style="font-size:13px;color:var(--cyan);" id="diff-display">0.70</span>
+          </div>
+          <input type="range" min="0" max="100" value="70" id="diff-slider" oninput="updateDiff(this.value)">
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="font-size:11px;color:var(--text-dim);">Beginner</span>
+            <span style="font-size:11px;color:var(--text-dim);">Expert</span>
+          </div>
+        </div>
+
+        <!-- Advanced expand -->
+        <div>
+          <div class="expand-toggle" onclick="toggleAdvanced()" style="display:flex;align-items:center;gap:8px;color:var(--cyan);font-size:13px;margin-bottom:12px;">
+            <span class="expand-icon" id="expand-icon">▶</span>
+            <span>Opponent Tuner — Advanced Parameters</span>
+          </div>
+          <div class="advanced-body" id="advanced-body">
+            <div style="background:#010409;border:1px solid var(--border);border-radius:6px;padding:16px;">
+              <p style="font-size:12px;color:var(--text-dim);margin:0 0 16px;">
+                These sliders directly modify the opponent's behavioral weights in the state machine. Changes are reflected in the preview.
+              </p>
+
+              <div id="tuner-aggressiveness" style="margin-bottom:14px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="font-size:12px;">Aggressiveness</span>
+                  <span class="mono" style="font-size:12px;color:var(--orange);" id="val-aggr">72</span>
+                </div>
+                <input type="range" min="0" max="100" value="72" oninput="document.getElementById('val-aggr').textContent=this.value;updatePreview()">
+              </div>
+
+              <div id="tuner-flexibility" style="margin-bottom:14px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="font-size:12px;">Flexibility</span>
+                  <span class="mono" style="font-size:12px;color:var(--cyan);" id="val-flex">35</span>
+                </div>
+                <input type="range" min="0" max="100" value="35" oninput="document.getElementById('val-flex').textContent=this.value;updatePreview()">
+              </div>
+
+              <div id="tuner-risk" style="margin-bottom:14px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="font-size:12px;">Risk Tolerance</span>
+                  <span class="mono" style="font-size:12px;color:var(--green);" id="val-risk">58</span>
+                </div>
+                <input type="range" min="0" max="100" value="58" oninput="document.getElementById('val-risk').textContent=this.value;updatePreview()">
+              </div>
+
+              <div id="tuner-emotional">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="font-size:12px;">Emotional Reactivity</span>
+                  <span class="mono" style="font-size:12px;color:var(--text-dim);" id="val-emo">44</span>
+                </div>
+                <input type="range" min="0" max="100" value="44" oninput="document.getElementById('val-emo').textContent=this.value;updatePreview()">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Preview panel -->
+      <div class="card" style="flex:1;padding:24px;min-width:0;display:flex;flex-direction:column;gap:16px;">
+        <div>
+          <div class="section-label">Simulation Preview</div>
+          <div class="terminal mono" style="font-size:12px;margin-top:8px;padding:12px 16px;">
+            <div class="terminal-line"><span class="t-key">scenario</span>: <span class="t-val" id="prev-scenario">salary_negotiation</span></div>
+            <div class="terminal-line"><span class="t-key">target</span>: <span class="t-val" id="prev-target">$185,000</span></div>
+            <div class="terminal-line"><span class="t-key">difficulty</span>: <span class="t-val" id="prev-diff">0.70</span> <span class="t-comment">(competitive)</span></div>
+            <div class="terminal-line"><span class="t-key">rounds</span>: <span class="t-val">10 max</span></div>
+            <div class="terminal-line"><span class="t-key">scoring_dims</span>: <span class="t-val">6</span></div>
+          </div>
+        </div>
+
+        <!-- Opponent persona -->
+        <div>
+          <div class="section-label" style="margin-bottom:8px;">Opponent Persona</div>
+          <div class="persona-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div>
+                <div style="font-weight:600;color:#e6edf3;" id="persona-name">Alex Chen</div>
+                <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">HR Director · Series B startup</div>
+              </div>
+              <span class="tag tag-orange" id="persona-style">Competitive</span>
+            </div>
+            <div class="persona-style-bar">
+              <span class="tag tag-dim">Anchors high</span>
+              <span class="tag tag-dim">Uses silence</span>
+              <span class="tag tag-dim">Budget-constrained framing</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Expected difficulty -->
+        <div>
+          <div class="section-label" style="margin-bottom:8px;">Expected Difficulty</div>
+          <div style="display:flex;gap:4px;margin-bottom:6px;" id="diff-dots">
+            <div class="dot filled hard"></div>
+            <div class="dot filled hard"></div>
+            <div class="dot filled hard"></div>
+            <div class="dot filled"></div>
+            <div class="dot"></div>
+          </div>
+          <div style="font-size:12px;color:var(--text-dim);" id="diff-label">Hard — opponent concedes rarely, uses pressure tactics</div>
+        </div>
+
+        <!-- Hidden state preview -->
+        <div class="hidden-state">
+          <div style="font-size:11px;font-weight:600;color:var(--orange);margin-bottom:6px;letter-spacing:0.06em;">OPPONENT HIDDEN STATE (revealed post-session)</div>
+          <div class="mono" style="color:var(--text-dim);">budget_ceiling: <span style="color:var(--orange);">████████</span> (locked)</div>
+          <div class="mono" style="color:var(--text-dim);">walkaway_point: <span style="color:var(--orange);">████████</span> (locked)</div>
+          <div class="mono" style="color:var(--text-dim);">satisfaction: <span style="color:var(--text-dim);">visible after round 3</span></div>
+        </div>
+
+        <button class="btn-solid" style="width:100%;padding:12px;font-size:15px;margin-top:auto;">
+          Begin Simulation →
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ENGINE TRANSPARENCY -->
+<section id="engine">
+  <div class="wrap">
+    <div class="section-label">Engine Internals</div>
+    <h2 style="font-size:24px;font-weight:700;margin:4px 0 8px;color:#e6edf3;">How DealSim Works — No Black Boxes</h2>
+    <p style="color:var(--text-dim);margin:0 0 32px;max-width:600px;">Every scoring decision is deterministic and auditable. After each session, the full debrief reveals every opponent state change and scoring event.</p>
+
+    <!-- Flow diagram -->
+    <div style="overflow-x:auto;margin-bottom:36px;">
+      <div style="display:flex;align-items:center;gap:4px;min-width:700px;padding:4px 0;">
+        <div class="flow-box active-box" style="min-width:120px;">
+          <div class="section-label" style="margin-bottom:4px;">Input</div>
+          <div style="font-size:13px;font-weight:600;color:var(--cyan);">User Message</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Intent · Tone · Offer value</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="min-width:140px;">
+          <div class="section-label" style="margin-bottom:4px;">Processing</div>
+          <div style="font-size:13px;font-weight:600;">Rule Parser</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Pattern matching · State delta</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="min-width:140px;">
+          <div class="section-label" style="margin-bottom:4px;">Opponent</div>
+          <div style="font-size:13px;font-weight:600;">State Machine</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">5 styles · Hidden vars</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="min-width:130px;">
+          <div class="section-label" style="margin-bottom:4px;">Scoring</div>
+          <div style="font-size:13px;font-weight:600;">6 Dimensions</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Each rated 0–100</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box active-box" style="min-width:120px;">
+          <div class="section-label" style="margin-bottom:4px;">Output</div>
+          <div style="font-size:13px;font-weight:600;color:var(--cyan);">Response + Delta</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">State update applied</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;">
+
+      <!-- Opponent state machine -->
+      <div class="card" style="padding:20px;">
+        <div class="section-label" style="margin-bottom:12px;">Opponent State Machine — 5 Styles</div>
+        <p style="font-size:12px;color:var(--text-dim);margin:0 0 12px;">Click a style to see its behavioral parameters. Each style has fixed weights for aggressiveness, flexibility, and reactivity.</p>
+        <div style="display:flex;flex-direction:column;gap:6px;" id="style-selector">
+          <div class="state-node active-state" onclick="selectStyle(this,'competitive')">Competitive — Anchors high, concedes rarely</div>
+          <div class="state-node" onclick="selectStyle(this,'collaborative')">Collaborative — Seeks mutual gain</div>
+          <div class="state-node" onclick="selectStyle(this,'analytical')">Analytical — Data-driven, slow to move</div>
+          <div class="state-node" onclick="selectStyle(this,'accommodating')">Accommodating — Prioritizes relationship</div>
+          <div class="state-node" onclick="selectStyle(this,'avoidant')">Avoidant — Deflects, delays decisions</div>
+        </div>
+        <div class="terminal mono" style="font-size:12px;margin-top:12px;padding:10px 14px;" id="style-readout">
+          <div><span class="t-key">aggressiveness</span>: <span class="t-val">0.85</span></div>
+          <div><span class="t-key">flexibility</span>: <span class="t-val">0.15</span></div>
+          <div><span class="t-key">concession_rate</span>: <span class="t-val">0.08 / round</span></div>
+          <div><span class="t-key">emotional_reactivity</span>: <span class="t-val">0.40</span></div>
+        </div>
+      </div>
+
+      <!-- 6 Scoring dimensions -->
+      <div class="card" style="padding:20px;">
+        <div class="section-label" style="margin-bottom:12px;">Scoring Engine — 6 Dimensions</div>
+        <p style="font-size:12px;color:var(--text-dim);margin:0 0 12px;">Each dimension is scored independently per round. No single score dominates the debrief.</p>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+              <span>Outcome Value</span><span class="mono" style="color:var(--cyan);">82</span>
+            </div>
+            <div class="gauge-bar"><div class="gauge-fill" style="width:82%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+              <span>Tactical Precision</span><span class="mono" style="color:var(--cyan);">67</span>
+            </div>
+            <div class="gauge-bar"><div class="gauge-fill" style="width:67%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+              <span>Anchor Management</span><span class="mono" style="color:var(--cyan);">74</span>
+            </div>
+            <div class="gauge-bar"><div class="gauge-fill" style="width:74%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+              <span>Concession Efficiency</span><span class="mono" style="color:var(--cyan);">59</span>
+            </div>
+            <div class="gauge-bar"><div class="gauge-fill" style="width:59%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+              <span>Pressure Response</span><span class="mono" style="color:var(--cyan);">88</span>
+            </div>
+            <div class="gauge-bar"><div class="gauge-fill" style="width:88%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+              <span>Relationship Preservation</span><span class="mono" style="color:var(--cyan);">71</span>
+            </div>
+            <div class="gauge-bar"><div class="gauge-fill" style="width:71%"></div></div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
+          Composite: <span class="mono" style="color:var(--green);">73.5 / 100</span> — these weights are published in the methodology doc.
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:16px 20px;margin-top:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:13px;font-weight:600;color:#e6edf3;">After each session: full debrief.</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:3px;">Every opponent state change, every scoring event, every hidden variable — revealed in a structured debrief report.</div>
+      </div>
+      <button class="btn-outline" style="white-space:nowrap;">View Sample Debrief →</button>
+    </div>
+  </div>
+</section>
+
+<!-- FREE TOOLS (RECIPROCITY) -->
+<section id="tools">
+  <div class="wrap">
+    <div class="section-label">Free Tools</div>
+    <h2 style="font-size:24px;font-weight:700;margin:4px 0 8px;color:#e6edf3;">Powerful tools. No signup required.</h2>
+    <p style="color:var(--text-dim);margin:0 0 28px;">Built on the same scoring engine as the full simulator. These tools are free and permanent.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;">
+
+      <!-- Offer Analyzer -->
+      <div class="card" style="padding:20px;display:flex;flex-direction:column;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="width:32px;height:32px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.25);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--cyan);">◈</div>
+          <div>
+            <div style="font-weight:600;color:#e6edf3;">Offer Analyzer</div>
+            <span class="tag tag-green" style="font-size:10px;">Free · No signup</span>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--text-dim);margin:0 0 12px;flex:1;">Paste a job offer. Get market positioning, percentile rank, and gap analysis against 2026 benchmarks.</p>
+        <div class="tool-preview">
+          <div class="preview-row"><span style="color:var(--text-dim);">Base salary</span><span style="color:var(--cyan);">P62 market</span></div>
+          <div class="preview-bar"><div class="preview-fill" style="width:62%"></div></div>
+          <div class="preview-row"><span style="color:var(--text-dim);">Equity</span><span style="color:var(--orange);">Below median</span></div>
+          <div class="preview-bar"><div class="preview-fill" style="width:38%;background:var(--orange);"></div></div>
+          <div class="preview-row"><span style="color:var(--text-dim);">Gap to P75</span><span style="color:var(--green);">+$18,400</span></div>
+        </div>
+        <button class="btn-outline" style="margin-top:14px;width:100%;">Open Offer Analyzer →</button>
+      </div>
+
+      <!-- Email Audit -->
+      <div class="card" style="padding:20px;display:flex;flex-direction:column;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="width:32px;height:32px;background:rgba(240,136,62,0.12);border:1px solid rgba(240,136,62,0.25);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--orange);">✉</div>
+          <div>
+            <div style="font-weight:600;color:#e6edf3;">Email Negotiation Audit</div>
+            <span class="tag tag-green" style="font-size:10px;">Free · No signup</span>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--text-dim);margin:0 0 12px;flex:1;">Paste a negotiation email. Get scored across 8 tactical dimensions — clarity, anchoring, BATNA signaling, and more.</p>
+        <div class="tool-preview">
+          <div class="preview-row"><span style="color:var(--text-dim);">Clarity of ask</span><span class="mono" style="font-size:12px;">84/100</span></div>
+          <div class="preview-bar"><div class="preview-fill" style="width:84%"></div></div>
+          <div class="preview-row"><span style="color:var(--text-dim);">Anchor strength</span><span class="mono" style="font-size:12px;">61/100</span></div>
+          <div class="preview-bar"><div class="preview-fill" style="width:61%"></div></div>
+          <div class="preview-row" style="color:var(--orange);font-size:11px;">⚠ Weak BATNA signal — flagged</div>
+        </div>
+        <button class="btn-outline" style="margin-top:14px;width:100%;border-color:var(--orange);color:var(--orange);">Open Email Audit →</button>
+      </div>
+
+      <!-- Lifetime Earnings -->
+      <div class="card" style="padding:20px;display:flex;flex-direction:column;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="width:32px;height:32px;background:rgba(63,185,80,0.12);border:1px solid rgba(63,185,80,0.25);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--green);">∑</div>
+          <div>
+            <div style="font-weight:600;color:#e6edf3;">Lifetime Earnings Calculator</div>
+            <span class="tag tag-green" style="font-size:10px;">Free · No signup</span>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--text-dim);margin:0 0 12px;flex:1;">One good negotiation compounds. See how a $15k gain today translates to career earnings over 30 years with raises and investment returns.</p>
+        <div class="tool-preview">
+          <div class="preview-row"><span style="color:var(--text-dim);">Year 1 gain</span><span style="color:var(--green);">+$15,000</span></div>
+          <div class="preview-row"><span style="color:var(--text-dim);">10-year impact</span><span style="color:var(--green);">+$189,000</span></div>
+          <div class="preview-row"><span style="color:var(--text-dim);">30-year impact</span><span style="color:var(--cyan);font-weight:600;">+$1,240,000</span></div>
+          <div style="font-size:10px;color:var(--text-dim);margin-top:6px;">Assumes 3% annual raise compounding + 7% investment return</div>
+        </div>
+        <button class="btn-outline" style="margin-top:14px;width:100%;border-color:var(--green);color:var(--green);">Open Calculator →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ANALYTICS DASHBOARD -->
+<section id="analytics">
+  <div class="wrap">
+    <div class="section-label">Your Data</div>
+    <h2 style="font-size:24px;font-weight:700;margin:4px 0 8px;color:#e6edf3;">Performance Analytics</h2>
+    <p style="color:var(--text-dim);margin:0 0 28px;">Your data, stored locally. Every session builds your personal performance dataset.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;">
+
+      <!-- Stats summary -->
+      <div class="card" style="padding:20px;">
+        <div class="section-label" style="margin-bottom:16px;">Session Summary</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
+          <div style="text-align:center;">
+            <div style="font-size:28px;font-weight:700;color:var(--cyan);font-family:monospace;">12</div>
+            <div style="font-size:11px;color:var(--text-dim);">Sessions</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:28px;font-weight:700;color:var(--green);font-family:monospace;">74</div>
+            <div style="font-size:11px;color:var(--text-dim);">Avg Score</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:28px;font-weight:700;color:var(--orange);font-family:monospace;">89</div>
+            <div style="font-size:11px;color:var(--text-dim);">Best Score</div>
+          </div>
+        </div>
+
+        <!-- Win/loss/draw -->
+        <div class="section-label" style="margin-bottom:8px;">Outcome Distribution</div>
+        <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px;margin-bottom:6px;">
+          <div style="flex:7;background:var(--green);border-radius:4px 0 0 4px;"></div>
+          <div style="flex:3;background:var(--text-dim);"></div>
+          <div style="flex:2;background:var(--red);border-radius:0 4px 4px 0;"></div>
+        </div>
+        <div style="display:flex;gap:16px;font-size:12px;">
+          <span><span style="color:var(--green);">●</span> Won 7</span>
+          <span><span style="color:var(--text-dim);">●</span> Draw 3</span>
+          <span><span style="color:var(--red);">●</span> Lost 2</span>
+        </div>
+
+        <!-- Score trend -->
+        <div class="section-label" style="margin-bottom:8px;margin-top:20px;">Score Trend (last 8 sessions)</div>
+        <div class="bar-chart">
+          <div class="bar-col"><div class="bar-rect" style="height:52%;"></div><div class="bar-label">S1</div></div>
+          <div class="bar-col"><div class="bar-rect" style="height:58%;"></div><div class="bar-label">S2</div></div>
+          <div class="bar-col"><div class="bar-rect" style="height:62%;"></div><div class="bar-label">S3</div></div>
+          <div class="bar-col"><div class="bar-rect" style="height:70%;"></div><div class="bar-label">S4</div></div>
+          <div class="bar-col"><div class="bar-rect" style="height:74%;"></div><div class="bar-label">S5</div></div>
+          <div class="bar-col"><div class="bar-rect" style="height:81%;"></div><div class="bar-label">S6</div></div>
+          <div class="bar-col"><div class="bar-rect" style="height:78%;"></div><div class="bar-label">S7</div></div>
+          <div class="bar-col latest" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;"><div class="bar-rect latest" style="height:89%;width:100%;"></div><div class="bar-label" style="color:var(--cyan);">S8</div></div>
+        </div>
+      </div>
+
+      <!-- Radar chart -->
+      <div class="card" style="padding:20px;">
+        <div class="section-label" style="margin-bottom:4px;">Dimension Breakdown</div>
+        <p style="font-size:12px;color:var(--text-dim);margin:0 0 16px;">Average across all sessions. Weak dimensions are your highest-ROI practice targets.</p>
+        <div class="radar-container">
+          <svg viewBox="0 0 200 200" width="200" height="200" style="display:block;margin:0 auto;">
+            <!-- Grid circles -->
+            <circle cx="100" cy="100" r="80" fill="none" stroke="#30363d" stroke-width="1"/>
+            <circle cx="100" cy="100" r="60" fill="none" stroke="#30363d" stroke-width="1"/>
+            <circle cx="100" cy="100" r="40" fill="none" stroke="#30363d" stroke-width="1"/>
+            <circle cx="100" cy="100" r="20" fill="none" stroke="#30363d" stroke-width="1"/>
+            <!-- Axes (6 dimensions) -->
+            <line x1="100" y1="100" x2="100" y2="20" stroke="#30363d" stroke-width="1"/>
+            <line x1="100" y1="100" x2="169.3" y2="60" stroke="#30363d" stroke-width="1"/>
+            <line x1="100" y1="100" x2="169.3" y2="140" stroke="#30363d" stroke-width="1"/>
+            <line x1="100" y1="100" x2="100" y2="180" stroke="#30363d" stroke-width="1"/>
+            <line x1="100" y1="100" x2="30.7" y2="140" stroke="#30363d" stroke-width="1"/>
+            <line x1="100" y1="100" x2="30.7" y2="60" stroke="#30363d" stroke-width="1"/>
+            <!-- Data polygon (scores: 82,67,74,59,88,71 → scaled to r80) -->
+            <!-- Dim1:82% → r=65.6 at top → (100, 100-65.6)=(100,34.4) -->
+            <!-- Dim2:67% → r=53.6 at 60deg → (+46.4,+26.8) → (146.4,126.8) wait, axes go clockwise from top -->
+            <!-- Let me use simple approximate coords -->
+            <polygon
+              points="100,34 153,73 148,134 100,155 55,128 55,64"
+              fill="rgba(88,166,255,0.15)"
+              stroke="#58a6ff"
+              stroke-width="1.5"
+            />
+            <!-- Labels -->
+            <text x="100" y="14" fill="#8b949e" font-size="9" text-anchor="middle">Outcome</text>
+            <text x="178" y="58" fill="#8b949e" font-size="9" text-anchor="start">Tactical</text>
+            <text x="178" y="148" fill="#8b949e" font-size="9" text-anchor="start">Anchor</text>
+            <text x="100" y="195" fill="#8b949e" font-size="9" text-anchor="middle">Concession</text>
+            <text x="22" y="148" fill="#8b949e" font-size="9" text-anchor="end">Pressure</text>
+            <text x="22" y="58" fill="#8b949e" font-size="9" text-anchor="end">Relation</text>
+            <!-- Data points -->
+            <circle cx="100" cy="34" r="3" fill="#58a6ff"/>
+            <circle cx="153" cy="73" r="3" fill="#58a6ff"/>
+            <circle cx="148" cy="134" r="3" fill="#58a6ff"/>
+            <circle cx="100" cy="155" r="3" fill="#58a6ff"/>
+            <circle cx="55" cy="128" r="3" fill="#58a6ff"/>
+            <circle cx="55" cy="64" r="3" fill="#58a6ff"/>
+          </svg>
+        </div>
+        <div style="font-size:11px;color:var(--text-dim);text-align:center;margin-top:4px;">
+          Weakest: <span style="color:var(--orange);">Concession Efficiency (59)</span> — practice recommended
+        </div>
+      </div>
+
+      <!-- New user overlay -->
+      <div class="card" style="padding:20px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;min-height:200px;position:relative;overflow:hidden;">
+        <div style="position:absolute;inset:0;background:rgba(13,17,23,0.6);backdrop-filter:blur(2px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;z-index:2;">
+          <div style="font-size:32px;margin-bottom:12px;color:var(--text-dim);">◎</div>
+          <div style="font-weight:600;color:#e6edf3;margin-bottom:6px;">Your dataset starts here</div>
+          <div style="font-size:13px;color:var(--text-dim);max-width:200px;line-height:1.5;">Complete sessions to build your performance analytics. Data is stored in your browser — never on our servers.</div>
+          <button class="btn-solid" style="margin-top:16px;">Start First Session</button>
+        </div>
+        <!-- Background ghost data -->
+        <div style="opacity:0.15;">
+          <div style="font-size:48px;font-weight:700;color:var(--cyan);">—</div>
+          <div style="font-size:13px;color:var(--text-dim);">No sessions yet</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCENARIO LIBRARY -->
+<section id="scenarios">
+  <div class="wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+      <div>
+        <div class="section-label">Scenario Library</div>
+        <h2 style="font-size:24px;font-weight:700;margin:4px 0 0;color:#e6edf3;">10 Simulation Scenarios</h2>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <select style="width:auto;font-size:12px;padding:6px 28px 6px 10px;">
+          <option>All Difficulties</option>
+          <option>Beginner (1-2)</option>
+          <option>Intermediate (3)</option>
+          <option>Hard (4-5)</option>
+        </select>
+        <select style="width:auto;font-size:12px;padding:6px 28px 6px 10px;">
+          <option>All Categories</option>
+          <option>Employment</option>
+          <option>Contract</option>
+          <option>Real Estate</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="scenario-grid">
+      <!-- Scenario cards -->
+      <div class="card" style="padding:16px;cursor:pointer;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='#58a6ff'" onmouseleave="this.style.borderColor='#30363d'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <span class="tag tag-blue">Employment</span>
+          <div class="dots"><div class="dot filled hard"></div><div class="dot filled hard"></div><div class="dot filled hard"></div><div class="dot filled"></div><div class="dot"></div></div>
+        </div>
+        <div style="font-weight:600;color:#e6edf3;margin-bottom:4px;">Salary Negotiation</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Counter a tech company offer. Opponent uses budget-ceiling framing and market anchors.</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);">
+          <span>↑ User wants more</span><span>5 personas</span>
+        </div>
+      </div>
+
+      <div class="card" style="padding:16px;cursor:pointer;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='#58a6ff'" onmouseleave="this.style.borderColor='#30363d'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <span class="tag tag-blue">Employment</span>
+          <div class="dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        </div>
+        <div style="font-weight:600;color:#e6edf3;margin-bottom:4px;">Annual Raise Request</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Navigate an internal raise conversation with your manager. Context: budget season.</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);">
+          <span>↑ User wants more</span><span>4 personas</span>
+        </div>
+      </div>
+
+      <div class="card" style="padding:16px;cursor:pointer;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='#58a6ff'" onmouseleave="this.style.borderColor='#30363d'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <span class="tag tag-orange">Contract</span>
+          <div class="dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div></div>
+        </div>
+        <div style="font-weight:600;color:#e6edf3;margin-bottom:4px;">Freelance Rate Increase</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Raise your rate with an existing client who expects continuity pricing.</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);">
+          <span>↑ User wants more</span><span>3 personas</span>
+        </div>
+      </div>
+
+      <div class="card" style="padding:16px;cursor:pointer;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='#58a6ff'" onmouseleave="this.style.borderColor='#30363d'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <span class="tag tag-dim">Real Estate</span>
+          <div class="dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        </div>
+        <div style="font-weight:600;color:#e6edf3;margin-bottom:4px;">Rent Reduction</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Negotiate a rent reduction at renewal with a landlord who has market leverage.</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);">
+          <span>↓ User wants less</span><span>3 personas</span>
+        </div>
+      </div>
+
+      <div class="card" style="padding:16px;cursor:pointer;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='#58a6ff'" onmouseleave="this.style.borderColor='#30363d'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <span class="tag tag-orange">Contract</span>
+          <div class="dots"><div class="dot filled hard"></div><div class="dot filled hard"></div><div class="dot filled hard"></div><div class="dot filled hard"></div><div class="dot"></div></div>
+        </div>
+        <div style="font-weight:600;color:#e6edf3;margin-bottom:4px;">Vendor Contract Renewal</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Push back on a 20% price increase from a critical infrastructure vendor.</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);">
+          <span>↓ User wants less</span><span>4 personas</span>
+        </div>
+      </div>
+
+      <div class="card" style="padding:16px;cursor:pointer;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='#58a6ff'" onmouseleave="this.style.borderColor='#30363d'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <span class="tag tag-blue">Employment</span>
+          <div class="dots"><div class="dot filled hard"></div><div class="dot filled hard"></div><div class="dot filled hard"></div><div class="dot filled hard"></div><div class="dot filled hard"></div></div>
+        </div>
+        <div style="font-weight:600;color:#e6edf3;margin-bottom:4px;">Equity Re-negotiation</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Renegotiate your equity package post-funding round with a founder who guards dilution.</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);">
+          <span>↑ User wants more</span><span>2 personas</span>
+        </div>
+      </div>
+
+      <div class="card" style="padding:16px;cursor:pointer;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='#58a6ff'" onmouseleave="this.style.borderColor='#30363d'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <span class="tag tag-blue">Employment</span>
+          <div class="dots"><div class="dot filled hard"></div><div class="dot filled hard"></div><div class="dot filled hard"></div><div class="dot filled hard"></div><div class="dot"></div></div>
+        </div>
+        <div style="font-weight:600;color:#e6edf3;margin-bottom:4px;">Severance Package</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Negotiate exit terms under time pressure with HR following a layoff event.</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);">
+          <span>↑ User wants more</span><span>3 personas</span>
+        </div>
+      </div>
+
+      <div class="card" style="padding:16px;cursor:pointer;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='#58a6ff'" onmouseleave="this.style.borderColor='#30363d'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <span class="tag tag-green">Business</span>
+          <div class="dots"><div class="dot filled hard"></div><div class="dot filled hard"></div><div class="dot filled hard"></div><div class="dot filled hard"></div><div class="dot filled hard"></div></div>
+        </div>
+        <div style="font-weight:600;color:#e6edf3;margin-bottom:4px;">Acquisition Offer</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Counter an acquisition offer from a strategic buyer who controls the timeline.</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);">
+          <span>↑ User wants more</span><span>2 personas</span>
+        </div>
+      </div>
+
+      <div class="card" style="padding:16px;cursor:pointer;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='#58a6ff'" onmouseleave="this.style.borderColor='#30363d'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <span class="tag tag-green">Business</span>
+          <div class="dots"><div class="dot filled hard"></div><div class="dot filled hard"></div><div class="dot filled hard"></div><div class="dot"></div><div class="dot"></div></div>
+        </div>
+        <div style="font-weight:600;color:#e6edf3;margin-bottom:4px;">Partnership Terms</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Negotiate revenue split and responsibilities with a prospective business partner.</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);">
+          <span>↑ User wants more</span><span>3 personas</span>
+        </div>
+      </div>
+
+      <div class="card" style="padding:16px;cursor:pointer;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='#58a6ff'" onmouseleave="this.style.borderColor='#30363d'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <span class="tag tag-blue">Employment</span>
+          <div class="dots"><div class="dot filled"></div><div class="dot filled"></div><div class="dot filled"></div><div class="dot"></div><div class="dot"></div></div>
+        </div>
+        <div style="font-weight:600;color:#e6edf3;margin-bottom:4px;">Job Offer Counter</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Counter a first offer with total comp optimization across salary, bonus, and equity.</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);">
+          <span>↑ User wants more</span><span>5 personas</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL PROOF -->
+<section>
+  <div class="wrap">
+    <div class="section-label">Who Uses DealSim</div>
+    <h2 style="font-size:24px;font-weight:700;margin:4px 0 8px;color:#e6edf3;">Built for practitioners.</h2>
+    <p style="color:var(--text-dim);margin:0 0 28px;">Not a game. A training tool used by people with real stakes.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:36px;">
+      <div class="card" style="padding:20px;">
+        <div style="font-size:20px;margin-bottom:10px;color:var(--cyan);">◑</div>
+        <div style="font-weight:600;color:#e6edf3;margin-bottom:6px;">Career Coaches</div>
+        <p style="font-size:13px;color:var(--text-dim);margin:0;">Use DealSim to run clients through their exact upcoming negotiation scenario before the real conversation. The debrief provides structured coaching data.</p>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-dim);">
+          "The scenario debrief gives me 10 minutes of structured coaching material per session."
+        </div>
+      </div>
+
+      <div class="card" style="padding:20px;">
+        <div style="font-size:20px;margin-bottom:10px;color:var(--orange);">◐</div>
+        <div style="font-weight:600;color:#e6edf3;margin-bottom:6px;">HR Professionals</div>
+        <p style="font-size:13px;color:var(--text-dim);margin:0;">Train hiring managers on negotiation dynamics from both sides of the table. Run the same scenario as candidate and as recruiter to build empathy.</p>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-dim);">
+          "Running our managers through the competitive-style opponent changed how they handle counteroffers."
+        </div>
+      </div>
+
+      <div class="card" style="padding:20px;">
+        <div style="font-size:20px;margin-bottom:10px;color:var(--green);">◎</div>
+        <div style="font-weight:600;color:#e6edf3;margin-bottom:6px;">Individuals</div>
+        <p style="font-size:13px;color:var(--text-dim);margin:0;">Practice before a high-stakes conversation. Run the same scenario 5 times on increasing difficulty. Build pattern recognition against specific opponent styles.</p>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-dim);">
+          "I ran the salary scenario 4 times before my offer call. The actual call felt slow."
+        </div>
+      </div>
+    </div>
+
+    <!-- Methodology transparency note -->
+    <div class="card" style="padding:16px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;border-color:rgba(88,166,255,0.3);">
+      <div style="width:32px;height:32px;flex-shrink:0;background:rgba(88,166,255,0.1);border:1px solid rgba(88,166,255,0.3);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--cyan);">≡</div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:13px;font-weight:600;color:#e6edf3;">Scoring methodology is public.</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">We publish how every dimension is computed. If you disagree with a score, you can trace exactly why DealSim gave it.</div>
+      </div>
+      <button class="btn-outline" style="white-space:nowrap;font-size:13px;">Read Methodology →</button>
+    </div>
+  </div>
+</section>
+
+<!-- FEEDBACK -->
+<section id="feedback">
+  <div class="wrap">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;">
+      <div>
+        <div class="section-label">Engine Calibration</div>
+        <h2 style="font-size:24px;font-weight:700;margin:4px 0 8px;color:#e6edf3;">Help calibrate the engine.</h2>
+        <p style="color:var(--text-dim);margin:0 0 20px;line-height:1.7;">
+          DealSim's opponent behaviors are built from research and practitioner input. When something feels wrong — an opponent who caves too easily, a score that seems off — that's signal we need.
+        </p>
+        <p style="color:var(--text-dim);margin:0;font-size:13px;">
+          Feedback goes directly into the scenario calibration queue. We publish our scoring methodology — <span style="color:var(--cyan);">transparency is not optional</span>.
+        </p>
+        <div class="terminal mono" style="margin-top:20px;font-size:12px;padding:12px 16px;">
+          <div style="color:var(--text-dim);"># Calibration pipeline</div>
+          <div><span class="t-key">feedback_received</span> → <span class="t-val">reviewed</span></div>
+          <div><span class="t-key">pattern_identified</span> → <span class="t-val">weight_adjusted</span></div>
+          <div><span class="t-key">scenario_version</span>: <span class="t-val">bumped</span></div>
+          <div><span class="t-key">change_logged</span>: <span class="t-val">public changelog</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:24px;">
+        <div class="section-label" style="margin-bottom:16px;">Submit Feedback</div>
+
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:6px;">Which scenario?</label>
+          <select>
+            <option>Salary Negotiation</option>
+            <option>Annual Raise Request</option>
+            <option>Freelance Rate Increase</option>
+            <option>Rent Reduction</option>
+            <option>Vendor Contract Renewal</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:6px;">What felt unrealistic?</label>
+          <textarea rows="3" placeholder="e.g. The competitive opponent caved too quickly after one BATNA mention. Real HR directors would push back harder on vague alternatives."></textarea>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:6px;">Suggested improvement (optional)</label>
+          <textarea rows="2" placeholder="e.g. Require the user to name a specific competing offer before the opponent adjusts stance."></textarea>
+        </div>
+
+        <button class="btn-solid" style="width:100%;">Submit to Calibration Queue</button>
+        <p style="font-size:11px;color:var(--text-dim);text-align:center;margin:10px 0 0;">No account required. We may publish anonymized feedback in our changelog.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer style="border-top:1px solid var(--border);padding:40px 0;background:#010409;">
+  <div class="wrap">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px;margin-bottom:32px;flex-wrap:wrap;">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <div class="nav-logo-mark">DS</div>
+          <span style="font-weight:600;color:#e6edf3;">DealSim</span>
+          <span class="nav-badge mono">v0.1.0</span>
+        </div>
+        <p style="font-size:13px;color:var(--text-dim);max-width:240px;line-height:1.6;margin:0 0 12px;">Part of SimVerse — open simulation infrastructure. 10 simulation products. 1 engine.</p>
+        <div style="font-size:12px;padding:8px 12px;background:#0d1117;border:1px solid var(--border);border-radius:4px;display:inline-block;">
+          <span style="color:var(--green);">●</span> <span style="color:var(--text-dim);font-size:11px;" class="mono">No AI-generated responses. Rule-based simulation engine.</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label" style="margin-bottom:12px;">Platform</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <a href="#" style="color:var(--text-dim);font-size:13px;text-decoration:none;">Simulation Console</a>
+          <a href="#" style="color:var(--text-dim);font-size:13px;text-decoration:none;">Scenario Library</a>
+          <a href="#" style="color:var(--text-dim);font-size:13px;text-decoration:none;">Free Tools</a>
+          <a href="#" style="color:var(--text-dim);font-size:13px;text-decoration:none;">Analytics</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label" style="margin-bottom:12px;">Engine</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <a href="#" style="color:var(--text-dim);font-size:13px;text-decoration:none;">API Docs <span style="font-size:10px;color:var(--text-dim);">(coming)</span></a>
+          <a href="#" style="color:var(--cyan);font-size:13px;text-decoration:none;">Engine Methodology</a>
+          <a href="#" style="color:var(--text-dim);font-size:13px;text-decoration:none;">Scoring Changelog</a>
+          <a href="#" style="color:var(--text-dim);font-size:13px;text-decoration:none;">SimVerse Platform</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label" style="margin-bottom:12px;">Legal</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <a href="privacy.html" style="color:var(--text-dim);font-size:13px;text-decoration:none;">Privacy Policy</a>
+          <a href="#" style="color:var(--text-dim);font-size:13px;text-decoration:none;">Terms of Use</a>
+          <a href="#feedback" style="color:var(--text-dim);font-size:13px;text-decoration:none;">Feedback</a>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;flex-wrap:wrap;gap:8px;">
+      <span style="font-size:12px;color:var(--text-dim);">DealSim v0.1.0 — Part of SimVerse. Open simulation infrastructure.</span>
+      <span style="font-size:12px;color:var(--text-dim);">Market data: Levels.fyi · Glassdoor · LinkedIn Salary · 2026</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Difficulty slider update
+  function updateDiff(val) {
+    const f = (val / 100).toFixed(2);
+    document.getElementById('diff-display').textContent = f;
+    document.getElementById('prev-diff').textContent = f;
+    updateDiffLabel(val);
+    updateDots(val);
+  }
+
+  function updateDiffLabel(val) {
+    const label = document.getElementById('diff-label');
+    if (val < 30) label.textContent = 'Beginner — opponent is accommodating, good for first practice';
+    else if (val < 55) label.textContent = 'Moderate — opponent uses standard tactics, occasional pressure';
+    else if (val < 75) label.textContent = 'Hard — opponent concedes rarely, uses pressure tactics';
+    else label.textContent = 'Expert — opponent is aggressive, inflexible, and strategic';
+  }
+
+  function updateDots(val) {
+    const container = document.getElementById('diff-dots');
+    const level = Math.ceil(val / 20);
+    const dots = container.querySelectorAll('.dot');
+    dots.forEach((d, i) => {
+      d.className = 'dot';
+      if (i < level) {
+        d.classList.add('filled');
+        if (val >= 70) d.classList.add('hard');
+      }
+    });
+  }
+
+  // Scenario preview update
+  const scenarioMap = {
+    salary: 'salary_negotiation',
+    offer: 'job_offer_counter',
+    rent: 'rent_reduction',
+    freelance: 'freelance_rate',
+    vendor: 'vendor_renewal',
+    raise: 'annual_raise',
+    equity: 'equity_renegotiation',
+    severance: 'severance_package',
+    partnership: 'partnership_terms',
+    acquisition: 'acquisition_offer'
+  };
+
+  function updatePreview() {
+    const sel = document.getElementById('scenario-select').value;
+    document.getElementById('prev-scenario').textContent = scenarioMap[sel] || sel;
+    const t = document.getElementById('target-input').value;
+    document.getElementById('prev-target').textContent = t || '(not set)';
+  }
+
+  // Advanced toggle
+  function toggleAdvanced() {
+    const body = document.getElementById('advanced-body');
+    const icon = document.getElementById('expand-icon');
+    body.classList.toggle('open');
+    icon.classList.toggle('rotated');
+  }
+
+  // Style selector
+  const styleData = {
+    competitive: { aggressiveness:'0.85', flexibility:'0.15', concession_rate:'0.08 / round', emotional_reactivity:'0.40' },
+    collaborative: { aggressiveness:'0.35', flexibility:'0.75', concession_rate:'0.22 / round', emotional_reactivity:'0.55' },
+    analytical: { aggressiveness:'0.50', flexibility:'0.40', concession_rate:'0.12 / round', emotional_reactivity:'0.20' },
+    accommodating: { aggressiveness:'0.20', flexibility:'0.85', concession_rate:'0.35 / round', emotional_reactivity:'0.65' },
+    avoidant: { aggressiveness:'0.30', flexibility:'0.30', concession_rate:'0.05 / round', emotional_reactivity:'0.50' }
+  };
+
+  function selectStyle(el, style) {
+    document.querySelectorAll('.state-node').forEach(n => n.classList.remove('active-state'));
+    el.classList.add('active-state');
+    const d = styleData[style];
+    const ro = document.getElementById('style-readout');
+    ro.innerHTML = `
+      <div><span class="t-key">aggressiveness</span>: <span class="t-val">${d.aggressiveness}</span></div>
+      <div><span class="t-key">flexibility</span>: <span class="t-val">${d.flexibility}</span></div>
+      <div><span class="t-key">concession_rate</span>: <span class="t-val">${d.concession_rate}</span></div>
+      <div><span class="t-key">emotional_reactivity</span>: <span class="t-val">${d.emotional_reactivity}</span></div>
+    `;
+  }
+</script>
+</body>
+</html>

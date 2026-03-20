@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dealsim-static",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8080", "-d", "D:/Claude Base/easy_access/dealsim/static"],
+      "port": 8080
+    }
+  ]
+}

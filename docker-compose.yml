@@ -1,0 +1,161 @@
+# =============================================================================
+# docker-compose.yml — DealSim production compose file
+#
+# Usage:
+#   docker compose up -d                  # start production stack
+#   docker compose logs -f app            # follow app logs
+#   docker compose ps                     # check service status
+#
+# For development overrides, docker-compose.override.yml is applied
+# automatically when you run "docker compose" without -f flags.
+# =============================================================================
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+    internal: true   # app is not reachable from the host directly
+
+volumes:
+  # SSL certificates shared between nginx and certbot
+  certbot-conf:
+  # Certbot webroot for ACME HTTP-01 challenge
+  certbot-www:
+  # Persistent app data: sessions, feedback, analytics JSONL files
+  app-data:
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # app — FastAPI application served by uvicorn
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dealsim-app
+    env_file:
+      - .env
+    environment:
+      DEALSIM_ENV: production
+      DEALSIM_DATA_DIR: /app/data
+      # Override worker count from .env for production
+      DEALSIM_WORKERS: "2"
+    volumes:
+      # Persistent data directory (sessions, feedback, events)
+      - app-data:/app/data
+    networks:
+      - backend
+    expose:
+      - "8000"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+        reservations:
+          cpus: "0.10"
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ---------------------------------------------------------------------------
+  # nginx — reverse proxy, TLS termination, rate limiting
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: dealsim-nginx
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Main nginx config
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # Server block config — use the full production conf from sites-available
+      - ./nginx/sites-available/dealsim.conf:/etc/nginx/conf.d/dealsim.conf:ro
+      # SSL certificates (read-only; certbot writes to the same volume)
+      - certbot-conf:/etc/letsencrypt:ro
+      # ACME challenge webroot
+      - certbot-www:/var/www/certbot:ro
+      # Custom error pages served directly by nginx (502, 429, etc.)
+      - ./nginx/error-pages:/etc/nginx/error-pages:ro
+    networks:
+      - frontend
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "wget -qO /dev/null http://localhost:80/nginx-health || exit 1"
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+        reservations:
+          cpus: "0.05"
+          memory: 32M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ---------------------------------------------------------------------------
+  # certbot — Let's Encrypt certificate renewal (runs every 12 hours)
+  #
+  # First-time certificate issuance is handled by scripts/deploy.sh.
+  # This service only handles renewals once a cert already exists.
+  # ---------------------------------------------------------------------------
+  certbot:
+    image: certbot/certbot:latest
+    container_name: dealsim-certbot
+    depends_on:
+      - nginx
+    volumes:
+      # Writes renewed certs here; nginx reads from the same volume
+      - certbot-conf:/etc/letsencrypt
+      # Serves ACME challenge files; nginx exposes /.well-known/acme-challenge/
+      - certbot-www:/var/www/certbot
+    # Attempt renewal every 12 hours; certbot skips if cert is not due yet
+    entrypoint: >
+      /bin/sh -c '
+        trap exit TERM;
+        while :; do
+          certbot renew --webroot -w /var/www/certbot --quiet;
+          sleep 43200 & wait $$!;
+        done
+      '
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.10"
+          memory: 64M
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"

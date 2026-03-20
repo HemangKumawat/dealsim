@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: dealsim
+    runtime: docker
+    plan: free
+    repo: https://github.com/YOUR_USERNAME/dealsim
+    branch: main
+    healthCheckPath: /health
+    envVars:
+      - key: DEALSIM_ENV
+        value: production
+      - key: DEALSIM_ADMIN_KEY
+        generateValue: true
+      - key: DEALSIM_CORS_ORIGINS
+        value: https://dealsim.onrender.com
+      - key: DEALSIM_DATA_DIR
+        value: /tmp/dealsim_data

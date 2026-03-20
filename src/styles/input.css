@@ -1,0 +1,15 @@
+/*
+ * DealSim — Tailwind CSS entry point
+ *
+ * This file is compiled by the Tailwind CLI:
+ *   npx tailwindcss -i src/styles/input.css -o static/tailwind.out.css --minify
+ *
+ * The output replaces the CDN <script src="https://cdn.tailwindcss.com"> tag
+ * in every HTML file once the build pipeline is validated.
+ *
+ * Content scanning is configured in tailwind.config.js.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

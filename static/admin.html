@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DealSim Admin</title>
+  <style>
+    /* ------------------------------------------------------------------ */
+    /* Base / tokens                                                         */
+    /* ------------------------------------------------------------------ */
+    :root {
+      --bg:         #0f1030;
+      --surface:    #1a1b4b;
+      --card:       #1e2055;
+      --card-hi:    #252662;
+      --border:     rgba(255,255,255,0.08);
+      --coral:      #f95c5c;
+      --coral-dim:  rgba(249,92,92,0.15);
+      --text:       #e2e8f0;
+      --muted:      rgba(255,255,255,0.45);
+      --green:      #4ade80;
+      --yellow:     #facc15;
+      --red:        #f87171;
+      --blue:       #60a5fa;
+      --radius:     12px;
+      --gap:        16px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Auth overlay                                                          */
+    /* ------------------------------------------------------------------ */
+    #auth-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+    }
+    #auth-overlay.hidden { display: none; }
+
+    .auth-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px 36px;
+      width: min(400px, 90vw);
+      text-align: center;
+    }
+    .auth-box h1 { color: var(--coral); font-size: 1.5rem; margin-bottom: 8px; }
+    .auth-box p  { color: var(--muted); font-size: 0.875rem; margin-bottom: 24px; }
+    .auth-box input {
+      width: 100%; padding: 10px 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 1rem;
+      outline: none; margin-bottom: 12px;
+    }
+    .auth-box input:focus { border-color: var(--coral); }
+    .auth-box button {
+      width: 100%; padding: 11px;
+      background: var(--coral); color: #fff;
+      border: none; border-radius: 8px; font-size: 1rem;
+      font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    }
+    .auth-box button:hover { opacity: 0.88; }
+    #auth-error {
+      color: var(--red); font-size: 0.82rem;
+      margin-top: 8px; min-height: 18px;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* App shell                                                             */
+    /* ------------------------------------------------------------------ */
+    #app { display: none; flex-direction: column; min-height: 100vh; }
+    #app.visible { display: flex; }
+
+    header {
+      padding: 16px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky; top: 0; z-index: 10;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 700; color: var(--coral); }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+
+    #status-badge {
+      font-size: 0.75rem; font-weight: 600; padding: 3px 10px;
+      border-radius: 99px; background: var(--coral-dim); color: var(--coral);
+    }
+    #status-badge.healthy  { background: rgba(74,222,128,0.12); color: var(--green); }
+    #status-badge.degraded { background: rgba(250,204,21,0.12);  color: var(--yellow); }
+    #status-badge.unhealthy{ background: rgba(248,113,113,0.15); color: var(--red); }
+
+    #refresh-btn {
+      font-size: 0.8rem; padding: 5px 12px;
+      background: transparent; border: 1px solid var(--border);
+      border-radius: 8px; color: var(--muted); cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    #refresh-btn:hover { border-color: var(--coral); color: var(--coral); }
+    #last-updated { font-size: 0.75rem; color: var(--muted); }
+
+    #logout-btn {
+      font-size: 0.75rem; padding: 4px 10px;
+      background: transparent; border: 1px solid var(--border);
+      border-radius: 8px; color: var(--muted); cursor: pointer;
+    }
+    #logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+    main {
+      flex: 1; padding: 24px;
+      max-width: 1200px; margin: 0 auto; width: 100%;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Loading skeleton                                                      */
+    /* ------------------------------------------------------------------ */
+    #loading {
+      display: flex; align-items: center; justify-content: center;
+      height: 200px; color: var(--muted); font-size: 0.9rem;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Grid layouts                                                          */
+    /* ------------------------------------------------------------------ */
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--gap);
+      margin-bottom: var(--gap);
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--gap);
+      margin-bottom: var(--gap);
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: var(--gap);
+      margin-bottom: var(--gap);
+    }
+
+    @media (max-width: 900px) {
+      .grid-4 { grid-template-columns: 1fr 1fr; }
+      .grid-3 { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 560px) {
+      .grid-4, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      main { padding: 12px; }
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Cards                                                                 */
+    /* ------------------------------------------------------------------ */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .card-title {
+      font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--muted); margin-bottom: 10px;
+    }
+
+    /* Stat card */
+    .stat-value {
+      font-size: 2rem; font-weight: 800; color: var(--coral);
+      line-height: 1.1;
+    }
+    .stat-value.green  { color: var(--green); }
+    .stat-value.yellow { color: var(--yellow); }
+    .stat-value.blue   { color: var(--blue); }
+    .stat-sub {
+      font-size: 0.78rem; color: var(--muted); margin-top: 4px;
+    }
+
+    /* Section header */
+    .section-title {
+      font-size: 0.85rem; font-weight: 700; color: var(--text);
+      margin: 24px 0 12px;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      padding-left: 2px;
+      border-left: 3px solid var(--coral);
+      padding-left: 10px;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Chart canvases                                                        */
+    /* ------------------------------------------------------------------ */
+    canvas { display: block; width: 100% !important; }
+
+    /* ------------------------------------------------------------------ */
+    /* Feedback table                                                        */
+    /* ------------------------------------------------------------------ */
+    .feedback-table {
+      width: 100%; border-collapse: collapse; font-size: 0.85rem;
+    }
+    .feedback-table th {
+      text-align: left; padding: 8px 10px;
+      color: var(--muted); font-size: 0.72rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border);
+    }
+    .feedback-table td {
+      padding: 10px; border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .feedback-table tr:last-child td { border-bottom: none; }
+    .stars { color: var(--coral); font-size: 0.8rem; }
+    .comment-text { color: var(--text); }
+    .comment-meta { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+    .empty-row { color: var(--muted); text-align: center; padding: 24px; font-size: 0.85rem; }
+
+    /* ------------------------------------------------------------------ */
+    /* Rating distribution bars                                             */
+    /* ------------------------------------------------------------------ */
+    .rating-bars { display: flex; flex-direction: column; gap: 8px; }
+    .rating-row  { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
+    .rating-label { width: 20px; text-align: right; color: var(--muted); flex-shrink: 0; }
+    .rating-track {
+      flex: 1; height: 8px; background: rgba(255,255,255,0.06);
+      border-radius: 4px; overflow: hidden;
+    }
+    .rating-fill  { height: 100%; background: var(--coral); border-radius: 4px; transition: width 0.4s; }
+    .rating-count { width: 28px; color: var(--muted); font-size: 0.75rem; flex-shrink: 0; }
+
+    /* ------------------------------------------------------------------ */
+    /* Error state                                                           */
+    /* ------------------------------------------------------------------ */
+    #error-banner {
+      background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3);
+      border-radius: 8px; padding: 12px 16px; color: var(--red);
+      font-size: 0.85rem; margin-bottom: 16px; display: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Auth overlay -->
+<div id="auth-overlay">
+  <div class="auth-box">
+    <h1>DealSim Admin</h1>
+    <p>Enter your admin key to access the dashboard.</p>
+    <input type="password" id="key-input" placeholder="Admin key" autocomplete="off" />
+    <button id="key-submit">Unlock Dashboard</button>
+    <div id="auth-error"></div>
+  </div>
+</div>
+
+<!-- Main app -->
+<div id="app">
+  <header>
+    <h1>DealSim Admin</h1>
+    <div class="header-right">
+      <span id="status-badge">—</span>
+      <span id="last-updated"></span>
+      <button id="refresh-btn">Refresh</button>
+      <button id="logout-btn">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="error-banner"></div>
+    <div id="loading">Loading dashboard data…</div>
+    <div id="dashboard" style="display:none">
+
+      <!-- Section: Session counts -->
+      <div class="section-title">Sessions</div>
+      <div class="grid-4">
+        <div class="card">
+          <div class="card-title">Today</div>
+          <div class="stat-value blue" id="s-today">—</div>
+          <div class="stat-sub">sessions started</div>
+        </div>
+        <div class="card">
+          <div class="card-title">This week</div>
+          <div class="stat-value blue" id="s-week">—</div>
+          <div class="stat-sub">Mon – today</div>
+        </div>
+        <div class="card">
+          <div class="card-title">All time</div>
+          <div class="stat-value" id="s-total">—</div>
+          <div class="stat-sub">total sessions</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Active now</div>
+          <div class="stat-value green" id="s-active">—</div>
+          <div class="stat-sub">in-memory sessions</div>
+        </div>
+      </div>
+
+      <!-- Section: Scores & completion -->
+      <div class="section-title">Performance</div>
+      <div class="grid-4">
+        <div class="card">
+          <div class="card-title">Avg score</div>
+          <div class="stat-value" id="p-avg">—</div>
+          <div class="stat-sub">out of 100</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Completed</div>
+          <div class="stat-value" id="p-completed">—</div>
+          <div class="stat-sub" id="p-rate">—% completion rate</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Total messages</div>
+          <div class="stat-value blue" id="p-messages">—</div>
+          <div class="stat-sub">across all sessions</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Error rate</div>
+          <div class="stat-value" id="p-errors">—</div>
+          <div class="stat-sub">errors / min (5 min avg)</div>
+        </div>
+      </div>
+
+      <!-- Section: Charts row 1 -->
+      <div class="section-title">Scenario Analysis</div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Most popular scenarios</div>
+          <canvas id="chart-scenario-pop" height="220"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">Avg score by scenario type</div>
+          <canvas id="chart-scenario-score" height="220"></canvas>
+        </div>
+      </div>
+
+      <!-- Section: Charts row 2 -->
+      <div class="section-title">Score Breakdown</div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title">Score distribution</div>
+          <canvas id="chart-score-dist" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">Avg score by difficulty</div>
+          <canvas id="chart-difficulty" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">Daily sessions (30 days)</div>
+          <canvas id="chart-daily" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- Section: Feedback -->
+      <div class="section-title">Feedback</div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Summary</div>
+          <div class="grid-2" style="margin-bottom:0">
+            <div>
+              <div class="stat-value" id="fb-avg">—</div>
+              <div class="stat-sub">avg rating (1–5)</div>
+            </div>
+            <div>
+              <div class="stat-value blue" id="fb-total">—</div>
+              <div class="stat-sub">total responses</div>
+            </div>
+          </div>
+          <div style="margin-top:20px">
+            <div class="card-title" style="margin-bottom:12px">Rating distribution</div>
+            <div class="rating-bars" id="fb-dist"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Recent comments</div>
+          <div id="fb-comments-wrap" style="overflow-x:auto">
+            <table class="feedback-table">
+              <thead><tr>
+                <th>Rating</th>
+                <th>Comment</th>
+                <th>Scenario</th>
+                <th>Time</th>
+              </tr></thead>
+              <tbody id="fb-comments"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- #dashboard -->
+  </main>
+</div><!-- #app -->
+
+<script>
+'use strict';
+
+// ---------------------------------------------------------------------------
+// Auth
+// ---------------------------------------------------------------------------
+const STORAGE_KEY = 'dealsim_admin_key';
+
+function getKey() {
+  return sessionStorage.getItem(STORAGE_KEY) || '';
+}
+
+function saveKey(k) {
+  sessionStorage.setItem(STORAGE_KEY, k);
+}
+
+function clearKey() {
+  sessionStorage.removeItem(STORAGE_KEY);
+}
+
+// ---------------------------------------------------------------------------
+// API helpers
+// ---------------------------------------------------------------------------
+async function apiFetch(path) {
+  const key = getKey();
+  const res = await fetch(path, {
+    headers: { 'Authorization': key }
+  });
+  if (res.status === 403 || res.status === 401) {
+    throw new Error('auth_failed');
+  }
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Chart helpers — pure Canvas, no frameworks
+// ---------------------------------------------------------------------------
+
+const CORAL  = '#f95c5c';
+const BLUE   = '#60a5fa';
+const GREEN  = '#4ade80';
+const YELLOW = '#facc15';
+const MUTED  = 'rgba(255,255,255,0.18)';
+const TEXT   = '#e2e8f0';
+
+const BAR_PALETTE = [
+  '#f95c5c', '#60a5fa', '#4ade80', '#facc15',
+  '#c084fc', '#fb923c', '#34d399', '#f472b6',
+  '#a78bfa', '#38bdf8',
+];
+
+function setupCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = rect.width || canvas.parentElement.clientWidth || 300;
+  const h = parseInt(canvas.getAttribute('height')) || 200;
+  canvas.width  = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx, w, h };
+}
+
+function drawBarChart(canvas, labels, values, color) {
+  if (!labels.length) return;
+  const { ctx, w, h } = setupCanvas(canvas);
+  const pad = { top: 16, right: 8, bottom: 44, left: 40 };
+  const cw = w - pad.left - pad.right;
+  const ch = h - pad.top - pad.bottom;
+  const max = Math.max(...values, 1);
+  const barW = cw / labels.length;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Grid lines
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + ch - (i / 4) * ch;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(pad.left + cw, y);
+    ctx.strokeStyle = MUTED;
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+    // Y label
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = '10px system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.round(max * i / 4), pad.left - 4, y + 3);
+  }
+
+  // Bars
+  labels.forEach((label, i) => {
+    const val = values[i] || 0;
+    const barH = (val / max) * ch;
+    const x = pad.left + i * barW + barW * 0.15;
+    const bw = barW * 0.7;
+    const y = pad.top + ch - barH;
+
+    const c = Array.isArray(color) ? color[i % color.length] : (color || CORAL);
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.roundRect(x, y, bw, barH, [3, 3, 0, 0]);
+    ctx.fill();
+
+    // X label
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = '10px system-ui';
+    ctx.textAlign = 'center';
+    const lbl = label.length > 9 ? label.slice(0, 8) + '…' : label;
+    ctx.fillText(lbl, pad.left + i * barW + barW / 2, pad.top + ch + 14);
+
+    // Value on bar
+    if (barH > 18) {
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 10px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(val, pad.left + i * barW + barW / 2, y - 4);
+    }
+  });
+}
+
+function drawHorizBarChart(canvas, labels, values, color) {
+  if (!labels.length) return;
+  const { ctx, w, h } = setupCanvas(canvas);
+  const barH = Math.min(24, (h - 8) / labels.length - 6);
+  const totalH = labels.length * (barH + 6);
+  const pad = { top: 8, right: 48, bottom: 8, left: 120 };
+  const cw = w - pad.left - pad.right;
+  const max = Math.max(...values, 1);
+
+  ctx.clearRect(0, 0, w, h);
+
+  labels.forEach((label, i) => {
+    const val = values[i] || 0;
+    const y = pad.top + i * (barH + 6);
+    const bw = (val / max) * cw;
+    const c = Array.isArray(color) ? color[i % color.length] : (color || CORAL);
+
+    // Label
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.font = '11px system-ui';
+    ctx.textAlign = 'right';
+    const lbl = label.length > 14 ? label.slice(0, 13) + '…' : label;
+    ctx.fillText(lbl, pad.left - 8, y + barH / 2 + 4);
+
+    // Track
+    ctx.fillStyle = MUTED;
+    ctx.beginPath();
+    ctx.roundRect(pad.left, y, cw, barH, 3);
+    ctx.fill();
+
+    // Fill
+    if (bw > 0) {
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.roundRect(pad.left, y, bw, barH, 3);
+      ctx.fill();
+    }
+
+    // Value
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = '10px system-ui';
+    ctx.textAlign = 'left';
+    ctx.fillText(val, pad.left + cw + 6, y + barH / 2 + 4);
+  });
+}
+
+function drawLineChart(canvas, labels, values, color) {
+  if (!labels.length) return;
+  const { ctx, w, h } = setupCanvas(canvas);
+  const pad = { top: 16, right: 8, bottom: 40, left: 36 };
+  const cw = w - pad.left - pad.right;
+  const ch = h - pad.top - pad.bottom;
+  const max = Math.max(...values, 1);
+  const step = cw / Math.max(labels.length - 1, 1);
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Grid
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + ch - (i / 4) * ch;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(pad.left + cw, y);
+    ctx.strokeStyle = MUTED;
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '10px system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.round(max * i / 4), pad.left - 4, y + 3);
+  }
+
+  const c = color || BLUE;
+
+  // Fill under line
+  ctx.beginPath();
+  labels.forEach((_, i) => {
+    const x = pad.left + i * step;
+    const y = pad.top + ch - ((values[i] || 0) / max) * ch;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.lineTo(pad.left + (labels.length - 1) * step, pad.top + ch);
+  ctx.lineTo(pad.left, pad.top + ch);
+  ctx.closePath();
+  ctx.fillStyle = c + '22';
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  labels.forEach((_, i) => {
+    const x = pad.left + i * step;
+    const y = pad.top + ch - ((values[i] || 0) / max) * ch;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = c;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // X-axis labels — show every ~7th to avoid crowding
+  const skip = Math.ceil(labels.length / 6);
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = '9px system-ui';
+  ctx.textAlign = 'center';
+  labels.forEach((label, i) => {
+    if (i % skip !== 0 && i !== labels.length - 1) return;
+    const x = pad.left + i * step;
+    ctx.fillText(label.slice(5), x, pad.top + ch + 14); // show MM-DD
+  });
+}
+
+// ---------------------------------------------------------------------------
+// DOM helpers
+// ---------------------------------------------------------------------------
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = (val === null || val === undefined) ? '—' : String(val);
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-banner');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 6000);
+}
+
+// ---------------------------------------------------------------------------
+// Render
+// ---------------------------------------------------------------------------
+function renderDashboard(analytics, health) {
+  // -- Session counts
+  setText('s-today',  analytics.sessions_today ?? '—');
+  setText('s-week',   analytics.sessions_this_week ?? '—');
+  setText('s-total',  analytics.total_sessions ?? '—');
+  setText('s-active', analytics.active_sessions ?? health.active_sessions ?? '—');
+
+  // -- Performance
+  setText('p-avg',       analytics.average_score ?? '—');
+  setText('p-completed', analytics.total_completed ?? '—');
+  setText('p-rate',      (analytics.completion_rate ?? '—') + '% completion rate');
+  setText('p-messages',  analytics.total_messages ?? '—');
+  setText('p-errors',    health.error_rate_per_min ?? '—');
+
+  // Status badge
+  const badge = document.getElementById('status-badge');
+  badge.textContent = health.status || 'unknown';
+  badge.className   = health.status || '';
+
+  // -- Scenario popularity (bar chart)
+  {
+    const pop = analytics.scenario_popularity || {};
+    const sorted = Object.entries(pop).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const labels = sorted.map(([k]) => k);
+    const values = sorted.map(([, v]) => v);
+    drawBarChart(
+      document.getElementById('chart-scenario-pop'),
+      labels, values, BAR_PALETTE
+    );
+  }
+
+  // -- Avg score by scenario (horiz bar)
+  {
+    const by_s = analytics.avg_score_by_scenario || {};
+    const sorted = Object.entries(by_s).sort((a, b) => b[1] - a[1]);
+    const labels = sorted.map(([k]) => k);
+    const values = sorted.map(([, v]) => v);
+    drawHorizBarChart(
+      document.getElementById('chart-scenario-score'),
+      labels, values, CORAL
+    );
+  }
+
+  // -- Score distribution (histogram)
+  {
+    const dist = analytics.score_distribution || {};
+    const buckets = Object.keys(dist).sort();
+    const counts  = buckets.map(k => dist[k]);
+    drawBarChart(
+      document.getElementById('chart-score-dist'),
+      buckets, counts, BLUE
+    );
+  }
+
+  // -- Avg score by difficulty
+  {
+    const diff = analytics.avg_score_by_difficulty || {};
+    const order = ['easy', 'medium', 'hard'];
+    const labels = order.filter(k => k in diff);
+    const values = labels.map(k => diff[k]);
+    const colors = [GREEN, YELLOW, CORAL];
+    drawBarChart(
+      document.getElementById('chart-difficulty'),
+      labels, values, colors
+    );
+  }
+
+  // -- Daily sessions line chart
+  {
+    const daily = analytics.daily_active_sessions || [];
+    const labels = daily.map(d => d.date);
+    const values = daily.map(d => d.sessions);
+    drawLineChart(
+      document.getElementById('chart-daily'),
+      labels, values, BLUE
+    );
+  }
+
+  // -- Feedback summary
+  const fb = analytics.feedback || {};
+  setText('fb-avg',   fb.average_rating ?? '—');
+  setText('fb-total', fb.total_feedback ?? '—');
+
+  // Rating distribution bars
+  {
+    const dist = fb.rating_distribution || {};
+    const total = Object.values(dist).reduce((a, b) => a + b, 0) || 1;
+    const container = document.getElementById('fb-dist');
+    container.innerHTML = '';
+    for (let star = 5; star >= 1; star--) {
+      const count = dist[String(star)] || 0;
+      const pct   = Math.round((count / total) * 100);
+      const row = document.createElement('div');
+      row.className = 'rating-row';
+      row.innerHTML = `
+        <span class="rating-label">${star}★</span>
+        <div class="rating-track">
+          <div class="rating-fill" style="width:${pct}%"></div>
+        </div>
+        <span class="rating-count">${count}</span>
+      `;
+      container.appendChild(row);
+    }
+  }
+
+  // Recent comments
+  {
+    const tbody = document.getElementById('fb-comments');
+    const comments = (fb.recent_comments || []).slice(0, 8);
+    if (!comments.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty-row">No comments yet</td></tr>';
+    } else {
+      tbody.innerHTML = comments.map(c => {
+        const stars = '★'.repeat(c.rating) + '☆'.repeat(5 - c.rating);
+        const comment = (c.comment || '').slice(0, 120) + (c.comment && c.comment.length > 120 ? '…' : '');
+        const ts = (c.submitted_at || '').slice(0, 16).replace('T', ' ');
+        const scenario = c.scenario_type || '—';
+        return `<tr>
+          <td><span class="stars">${stars}</span></td>
+          <td><span class="comment-text">${escapeHtml(comment) || '<em style="color:var(--muted)">—</em>'}</span></td>
+          <td><span class="comment-meta">${escapeHtml(scenario)}</span></td>
+          <td><span class="comment-meta">${escapeHtml(ts)}</span></td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  document.getElementById('loading').style.display    = 'none';
+  document.getElementById('dashboard').style.display  = 'block';
+  document.getElementById('last-updated').textContent =
+    'Updated ' + new Date().toLocaleTimeString();
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ---------------------------------------------------------------------------
+// Data loading
+// ---------------------------------------------------------------------------
+let refreshTimer = null;
+
+async function loadData(isAutoRefresh = false) {
+  try {
+    const [analytics, health] = await Promise.all([
+      apiFetch('/api/admin/analytics'),
+      apiFetch('/api/health'),
+    ]);
+    renderDashboard(analytics, health);
+  } catch (err) {
+    if (err.message === 'auth_failed') {
+      clearKey();
+      showAuthOverlay();
+    } else {
+      if (!isAutoRefresh) {
+        showError('Failed to load data: ' + err.message);
+      }
+    }
+  }
+}
+
+function scheduleRefresh() {
+  clearInterval(refreshTimer);
+  refreshTimer = setInterval(() => loadData(true), 30_000);
+}
+
+// ---------------------------------------------------------------------------
+// Auth flow
+// ---------------------------------------------------------------------------
+function showAuthOverlay() {
+  document.getElementById('auth-overlay').classList.remove('hidden');
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('auth-error').textContent = '';
+}
+
+function showApp() {
+  document.getElementById('auth-overlay').classList.add('hidden');
+  document.getElementById('app').classList.add('visible');
+  document.getElementById('loading').style.display    = 'block';
+  document.getElementById('dashboard').style.display  = 'none';
+  loadData();
+  scheduleRefresh();
+}
+
+async function attemptLogin() {
+  const input = document.getElementById('key-input');
+  const key = input.value.trim();
+  if (!key) {
+    document.getElementById('auth-error').textContent = 'Please enter your admin key.';
+    return;
+  }
+
+  // Quick probe to verify the key before saving
+  saveKey(key);
+  try {
+    await apiFetch('/api/admin/analytics');
+    showApp();
+  } catch (err) {
+    clearKey();
+    if (err.message === 'auth_failed') {
+      document.getElementById('auth-error').textContent = 'Invalid admin key.';
+    } else {
+      document.getElementById('auth-error').textContent = 'Could not reach server: ' + err.message;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Event listeners
+// ---------------------------------------------------------------------------
+document.getElementById('key-submit').addEventListener('click', attemptLogin);
+document.getElementById('key-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') attemptLogin();
+});
+document.getElementById('refresh-btn').addEventListener('click', () => loadData());
+document.getElementById('logout-btn').addEventListener('click', () => {
+  clearKey();
+  clearInterval(refreshTimer);
+  showAuthOverlay();
+});
+
+// Re-draw charts on resize
+window.addEventListener('resize', () => {
+  const dashboard = document.getElementById('dashboard');
+  if (dashboard.style.display !== 'none') {
+    // Re-trigger a data load so charts are redrawn at correct size
+    loadData(true);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Bootstrap
+// ---------------------------------------------------------------------------
+(function init() {
+  const stored = getKey();
+  if (stored) {
+    showApp();
+  } else {
+    showAuthOverlay();
+  }
+})();
+</script>
+</body>
+</html>

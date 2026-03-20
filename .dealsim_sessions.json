@@ -1,0 +1,71 @@
+{
+  "updated_at": "2026-03-19T23:39:58.410831+00:00",
+  "sessions": {
+    "dd6c0c78-e2a3-4975-883e-fa9e7f24c7b9": {
+      "session_id": "dd6c0c78-e2a3-4975-883e-fa9e7f24c7b9",
+      "status": "active",
+      "created_at": "2026-03-19T23:39:58.409255+00:00",
+      "completed_at": null,
+      "persona": {
+        "name": "Sarah Mitchell",
+        "role": "Senior HR Manager at Fortune 500",
+        "style": "compromising",
+        "pressure": "low",
+        "target_price": 90000.0,
+        "reservation_price": 105000.0,
+        "opening_offer": 85000.0,
+        "patience": 0.9,
+        "transparency": 0.2,
+        "emotional_reactivity": 0.1,
+        "hidden_constraints": [
+          "Strict pay bands \u2014 can't exceed band maximum",
+          "Can offer signing bonus up to 15% of base",
+          "Relocation package is separate budget"
+        ],
+        "system_prompt": "You are corporate HR. Stay within the pay band (max 105000)."
+      },
+      "state": {
+        "user_last_offer": 130000.0,
+        "opponent_last_offer": 96000,
+        "user_opening_anchor": 130000.0,
+        "opponent_opening_anchor": 85000.0,
+        "user_concession_count": 0,
+        "opponent_concession_count": 1,
+        "user_question_count": 0,
+        "user_batna_signals": 0,
+        "user_information_shares": 0,
+        "user_total_concession": 0.0,
+        "opponent_total_concession": 11000.0,
+        "turn_count": 1,
+        "resolved": false,
+        "agreed_value": null,
+        "transcript": [
+          {
+            "turn_number": 0,
+            "speaker": "opponent",
+            "text": "Standard for this role is $85,000. If we're both reasonable we should find a number that works.",
+            "move_type": "anchor",
+            "offer_amount": 85000.0,
+            "concession_from": null
+          },
+          {
+            "turn_number": 1,
+            "speaker": "user",
+            "text": "I want $130K",
+            "move_type": "anchor",
+            "offer_amount": 130000.0,
+            "concession_from": null
+          },
+          {
+            "turn_number": 2,
+            "speaker": "opponent",
+            "text": "I see where you're coming from \u2014 we're not quite there yet. Split the difference \u2014 $96,000?",
+            "move_type": "concession",
+            "offer_amount": 96000,
+            "concession_from": 85000.0
+          }
+        ]
+      }
+    }
+  }
+}

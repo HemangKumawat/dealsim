@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DealSim — The Coach</title>
+<link rel="stylesheet" href="/tailwind.out.css" />
+<link rel="stylesheet" href="/themes.css" />
+<style>
+  /* ── Base ─────────────────────────────────────────────── */
+  :root {
+    --bg-start:   #1a1147;
+    --bg-end:     #2d1b69;
+    --amber:      #f5a623;
+    --emerald:    #00d68f;
+    --coach-purple:#7c5cff;
+    --card-bg:    #221758;
+    --card-border: rgba(124,92,255,0.30);
+    --text-dim:   rgba(255,255,255,0.65);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, var(--bg-start) 0%, var(--bg-end) 100%);
+    min-height: 100vh;
+    color: #fff;
+  }
+
+  /* ── Scrollbar ────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--coach-purple); border-radius: 9px; }
+
+  /* ── Cards ────────────────────────────────────────────── */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(124,92,255,0.08);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 50px rgba(0,0,0,0.45), 0 0 24px rgba(124,92,255,0.18);
+  }
+
+  .card-amber {
+    border-color: rgba(245,166,35,0.35);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.35), 0 0 24px rgba(245,166,35,0.10);
+  }
+  .card-emerald {
+    border-color: rgba(0,214,143,0.30);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.35), 0 0 24px rgba(0,214,143,0.10);
+  }
+
+  /* ── Glow borders ─────────────────────────────────────── */
+  .glow-amber  { box-shadow: 0 0 18px rgba(245,166,35,0.45); }
+  .glow-purple { box-shadow: 0 0 18px rgba(124,92,255,0.50); }
+  .glow-emerald{ box-shadow: 0 0 18px rgba(0,214,143,0.45); }
+
+  /* ── Buttons ──────────────────────────────────────────── */
+  .btn-primary {
+    background: linear-gradient(135deg, #f5a623, #e8952b);
+    color: #1a1147;
+    font-weight: 700;
+    border-radius: 50px;
+    padding: 14px 36px;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.18s, box-shadow 0.18s;
+    box-shadow: 0 4px 20px rgba(245,166,35,0.45);
+    display: inline-block;
+    text-decoration: none;
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 8px 28px rgba(245,166,35,0.65);
+  }
+  .btn-primary:active { transform: scale(0.97); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 50px;
+    padding: 10px 24px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .btn-ghost:hover {
+    background: rgba(255,255,255,0.07);
+    color: #fff;
+    border-color: rgba(255,255,255,0.35);
+  }
+
+  /* ── Pill tags ────────────────────────────────────────── */
+  .pill {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+  .pill-amber   { background: rgba(245,166,35,0.18); color: #f5a623; }
+  .pill-emerald { background: rgba(0,214,143,0.18);  color: #00d68f; }
+  .pill-purple  { background: rgba(124,92,255,0.22); color: #a78bff; }
+
+  /* ── Section titles ───────────────────────────────────── */
+  .section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--coach-purple);
+    margin-bottom: 6px;
+  }
+
+  /* ── Blob hero shapes ─────────────────────────────────── */
+  .blob-wrap { position: relative; width: 260px; height: 260px; flex-shrink: 0; }
+  .blob {
+    position: absolute;
+    border-radius: 60% 40% 55% 45% / 45% 55% 45% 55%;
+    opacity: 0.85;
+  }
+  .blob-1 {
+    width: 220px; height: 220px;
+    background: radial-gradient(circle at 40% 40%, #7c5cff, #3b21a8);
+    top: 20px; left: 20px;
+    animation: morphBlob 8s ease-in-out infinite;
+  }
+  .blob-2 {
+    width: 130px; height: 130px;
+    background: radial-gradient(circle at 50% 50%, #f5a623, #c96a00);
+    bottom: 10px; right: 0;
+    animation: morphBlob 6s ease-in-out infinite reverse;
+    opacity: 0.7;
+  }
+  .blob-3 {
+    width: 80px; height: 80px;
+    background: radial-gradient(circle at 50% 50%, #00d68f, #00875a);
+    top: 0; left: 60px;
+    animation: morphBlob 10s ease-in-out infinite 2s;
+    opacity: 0.6;
+  }
+  .blob-face {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -55%);
+    font-size: 72px;
+    line-height: 1;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+    animation: floatFace 4s ease-in-out infinite;
+  }
+  @keyframes morphBlob {
+    0%,100% { border-radius: 60% 40% 55% 45% / 45% 55% 45% 55%; }
+    33%      { border-radius: 45% 55% 40% 60% / 55% 45% 55% 45%; }
+    66%      { border-radius: 55% 45% 60% 40% / 40% 60% 40% 60%; }
+  }
+  @keyframes floatFace {
+    0%,100% { transform: translate(-50%, -55%); }
+    50%      { transform: translate(-50%, -62%); }
+  }
+
+  /* ── Avatar stack ─────────────────────────────────────── */
+  .avatar-stack { display: flex; }
+  .avatar-stack span {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-start);
+    margin-left: -8px;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--card-bg);
+  }
+  .avatar-stack span:first-child { margin-left: 0; }
+
+  /* ── Onboarding ───────────────────────────────────────── */
+  .onboarding-step { display: none; }
+  .onboarding-step.active { display: block; animation: fadeSlideIn 0.35s ease; }
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateX(18px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .scenario-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .scenario-tile {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 14px;
+    padding: 14px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+  }
+  .scenario-tile:hover, .scenario-tile.selected {
+    background: rgba(124,92,255,0.20);
+    border-color: var(--coach-purple);
+    color: #fff;
+    transform: scale(1.04);
+  }
+  .scenario-tile .icon { font-size: 1.8rem; margin-bottom: 6px; }
+
+  /* ── Confidence emoji slider ──────────────────────────── */
+  .emoji-slider { display: flex; gap: 8px; justify-content: space-between; }
+  .emoji-btn {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 10px 4px;
+    cursor: pointer;
+    font-size: 1.6rem;
+    text-align: center;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  }
+  .emoji-btn:hover, .emoji-btn.selected {
+    background: rgba(124,92,255,0.22);
+    border-color: var(--coach-purple);
+    transform: scale(1.12);
+  }
+
+  /* ── Progress dot stepper ─────────────────────────────── */
+  .step-dots { display: flex; gap: 8px; justify-content: center; margin-top: 18px; }
+  .step-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(255,255,255,0.20);
+    transition: background 0.3s, transform 0.3s;
+  }
+  .step-dot.active { background: var(--amber); transform: scale(1.3); }
+  .step-dot.done   { background: var(--emerald); }
+
+  /* ── Learning path ────────────────────────────────────── */
+  .path-container { position: relative; padding: 10px 0; }
+  .path-line {
+    position: absolute;
+    left: 50%; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--emerald) 0%, var(--coach-purple) 40%, rgba(255,255,255,0.10) 100%);
+    transform: translateX(-50%);
+    border-radius: 9px;
+  }
+  .path-node-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 28px;
+    position: relative;
+    z-index: 1;
+  }
+  .path-node-row:nth-child(even) { flex-direction: row-reverse; }
+  .path-node-row:nth-child(even) .path-label { text-align: left; }
+  .path-label {
+    flex: 1;
+    text-align: right;
+    padding-right: 28px;
+    padding-left: 0;
+    font-size: 0.9rem;
+  }
+  .path-node-row:nth-child(even) .path-label {
+    padding-left: 28px;
+    padding-right: 0;
+  }
+
+  .path-node {
+    width: 44px; height: 44px; flex-shrink: 0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    border: 3px solid;
+    transition: transform 0.2s;
+  }
+  .path-node:hover { transform: scale(1.12); }
+  .node-done    { background: var(--emerald); border-color: var(--emerald); color: #1a1147; box-shadow: 0 0 14px rgba(0,214,143,0.55); }
+  .node-current { background: var(--amber);   border-color: var(--amber);   color: #1a1147; box-shadow: 0 0 22px rgba(245,166,35,0.70); animation: pulse-node 2s ease-in-out infinite; }
+  .node-locked  { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.18); color: rgba(255,255,255,0.30); }
+
+  @keyframes pulse-node {
+    0%,100% { box-shadow: 0 0 22px rgba(245,166,35,0.70); }
+    50%      { box-shadow: 0 0 36px rgba(245,166,35,1.00); }
+  }
+
+  /* ── Radar / DNA chart ────────────────────────────────── */
+  .radar-wrap { display: flex; justify-content: center; }
+
+  /* ── Difficulty dots ──────────────────────────────────── */
+  .diff-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+  .diff-dot.filled { background: var(--amber); }
+  .diff-dot.empty  { background: rgba(255,255,255,0.20); }
+
+  /* ── Coach note cards ─────────────────────────────────── */
+  .coach-note {
+    background: rgba(124,92,255,0.10);
+    border: 1px solid rgba(124,92,255,0.25);
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .coach-note .note-icon {
+    width: 38px; height: 38px; flex-shrink: 0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+  }
+
+  /* ── Garden ───────────────────────────────────────────── */
+  .garden-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .garden-plot {
+    aspect-ratio: 1;
+    background: rgba(0,214,143,0.04);
+    border: 1px dashed rgba(0,214,143,0.20);
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+  .garden-plot:hover { transform: scale(1.04); }
+  .garden-plant { font-size: 2.2rem; line-height: 1; animation: growIn 0.6s ease; }
+  .garden-label { font-size: 0.68rem; color: var(--text-dim); margin-top: 6px; text-align: center; }
+  .garden-soil {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 28%;
+    background: linear-gradient(0deg, rgba(0,214,143,0.12), transparent);
+    border-radius: 0 0 17px 17px;
+  }
+  @keyframes growIn {
+    from { transform: scale(0.4); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+
+  /* ── Community insight cards ──────────────────────────── */
+  .insight-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    position: relative;
+  }
+  .insight-card::before {
+    content: '"';
+    position: absolute;
+    top: 6px; left: 12px;
+    font-size: 2rem;
+    color: var(--coach-purple);
+    opacity: 0.5;
+    line-height: 1;
+  }
+
+  /* ── Confetti canvas ──────────────────────────────────── */
+  #confetti-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    display: none;
+  }
+
+  /* ── Unfinished nudge ─────────────────────────────────── */
+  .nudge-bar {
+    background: linear-gradient(90deg, rgba(245,166,35,0.18), rgba(124,92,255,0.18));
+    border: 1px solid rgba(245,166,35,0.35);
+    border-radius: 14px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    animation: nudgePulse 3s ease-in-out infinite;
+  }
+  @keyframes nudgePulse {
+    0%,100% { border-color: rgba(245,166,35,0.35); }
+    50%      { border-color: rgba(245,166,35,0.70); }
+  }
+
+  /* ── Tip lightbulb ────────────────────────────────────── */
+  .tip-bulb {
+    font-size: 1.8rem;
+    animation: lightbulbOn 2.5s ease-in-out infinite;
+    display: inline-block;
+  }
+  @keyframes lightbulbOn {
+    0%,100% { filter: drop-shadow(0 0 4px rgba(245,166,35,0.4)); }
+    50%      { filter: drop-shadow(0 0 14px rgba(245,166,35,1.0)); }
+  }
+
+  /* ── Goal widget ──────────────────────────────────────── */
+  .goal-chip {
+    background: rgba(124,92,255,0.14);
+    border: 1.5px solid rgba(124,92,255,0.30);
+    border-radius: 50px;
+    padding: 8px 18px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    color: rgba(255,255,255,0.80);
+  }
+  .goal-chip:hover, .goal-chip.selected {
+    background: rgba(124,92,255,0.35);
+    border-color: var(--coach-purple);
+    color: #fff;
+  }
+
+  /* ── Emoji feedback ───────────────────────────────────── */
+  .feedback-face {
+    font-size: 2rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+    filter: grayscale(0.5);
+  }
+  .feedback-face:hover, .feedback-face.selected {
+    transform: scale(1.3);
+    filter: grayscale(0);
+  }
+
+  /* ── Progress bar ─────────────────────────────────────── */
+  .progress-bar-track {
+    background: rgba(255,255,255,0.10);
+    border-radius: 50px;
+    height: 8px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 50px;
+    background: linear-gradient(90deg, var(--emerald), #00ffa3);
+    transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* ── Nav ──────────────────────────────────────────────── */
+  .nav-dot {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.07);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    text-decoration: none;
+    color: rgba(255,255,255,0.7);
+  }
+  .nav-dot:hover { background: rgba(124,92,255,0.30); transform: scale(1.1); color: #fff; }
+
+  /* ── Section spacing ──────────────────────────────────── */
+  .section { padding: 60px 0; }
+
+  /* ── Responsive tweaks ────────────────────────────────── */
+  @media (max-width: 640px) {
+    .hero-inner { flex-direction: column !important; text-align: center; }
+    .blob-wrap   { width: 180px; height: 180px; margin: 0 auto 16px; }
+    .blob-1 { width: 160px; height: 160px; }
+    .blob-face  { font-size: 52px; }
+    .scenario-grid { grid-template-columns: repeat(2, 1fr); }
+    .garden-grid   { grid-template-columns: repeat(3, 1fr); }
+    .path-label    { font-size: 0.78rem; }
+    .avatar-stack  { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  CONFETTI CANVAS                                        -->
+<!-- ─────────────────────────────────────────────────────── -->
+<canvas id="confetti-canvas"></canvas>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  STICKY NAV                                             -->
+<!-- ─────────────────────────────────────────────────────── -->
+<nav style="position:sticky;top:0;z-index:100;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);background:rgba(26,17,71,0.75);border-bottom:1px solid rgba(255,255,255,0.07);">
+  <div style="max-width:900px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:1.3rem;">🎯</span>
+      <span style="font-weight:800;font-size:1.05rem;letter-spacing:-0.01em;">DealSim <span style="color:var(--coach-purple);">Coach</span></span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <a href="#path"          class="nav-dot" title="Learning Path">🗺️</a>
+      <a href="#dna"           class="nav-dot" title="Your DNA">🧬</a>
+      <a href="#garden"        class="nav-dot" title="Garden">🌱</a>
+      <a href="#community"     class="nav-dot" title="Community">💬</a>
+      <button onclick="fireConfetti()" class="btn-primary" style="padding:8px 20px;font-size:0.85rem;">My Progress</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  HERO                                                   -->
+<!-- ─────────────────────────────────────────────────────── -->
+<section class="section" style="padding-top:80px;padding-bottom:60px;">
+  <div style="max-width:900px;margin:0 auto;padding:0 24px;">
+    <!-- Zeigarnik nudge -->
+    <div class="nudge-bar" style="margin-bottom:32px;">
+      <span style="font-size:1.4rem;">⏸️</span>
+      <div style="flex:1;">
+        <div style="font-weight:700;font-size:0.95rem;">You have an unfinished negotiation</div>
+        <div style="font-size:0.82rem;color:var(--text-dim);margin-top:2px;">"Freelance Rate Discussion" — you stopped 2 moves before the close. Pick it up?</div>
+      </div>
+      <button class="btn-primary" style="padding:9px 22px;font-size:0.82rem;white-space:nowrap;">Resume</button>
+    </div>
+
+    <!-- Hero body -->
+    <div class="hero-inner" style="display:flex;align-items:center;gap:48px;">
+      <!-- Blob illustration -->
+      <div class="blob-wrap">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+        <div class="blob-face">🤝</div>
+      </div>
+
+      <!-- Text -->
+      <div style="flex:1;">
+        <div class="section-label">Your Personal Coach</div>
+        <h1 style="font-size:clamp(2rem,5vw,3rem);font-weight:900;line-height:1.12;margin:0 0 16px;letter-spacing:-0.02em;">
+          Become the Negotiator<br/>
+          <span style="background:linear-gradient(90deg,#f5a623,#ff9f43);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">You Want to Be</span>
+        </h1>
+        <p style="font-size:1.05rem;color:var(--text-dim);line-height:1.65;margin:0 0 28px;max-width:420px;">
+          Practice with AI. Learn from every conversation.<br/>Grow with every deal.
+        </p>
+
+        <!-- Goal setter -->
+        <div style="margin-bottom:24px;">
+          <div style="font-size:0.82rem;color:var(--text-dim);margin-bottom:10px;">I want to improve my <span style="color:var(--amber);font-weight:600;">→</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;" id="goal-chips">
+            <button class="goal-chip selected" onclick="selectGoal(this)">Opening moves</button>
+            <button class="goal-chip" onclick="selectGoal(this)">Confidence</button>
+            <button class="goal-chip" onclick="selectGoal(this)">Listening skills</button>
+            <button class="goal-chip" onclick="selectGoal(this)">Closing power</button>
+            <button class="goal-chip" onclick="selectGoal(this)">Silence tactics</button>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+          <button class="btn-primary" onclick="showOnboarding()">Start Your Journey</button>
+          <a href="#path" style="color:var(--text-dim);font-size:0.88rem;text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-dim)'">See my path →</a>
+        </div>
+
+        <!-- Social proof -->
+        <div style="display:flex;align-items:center;gap:12px;margin-top:22px;">
+          <div class="avatar-stack">
+            <span>😊</span><span>🙂</span><span>😄</span><span>😁</span><span>🤩</span>
+          </div>
+          <span style="font-size:0.82rem;color:var(--text-dim);">Start improving your negotiation skills today</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  ONBOARDING CARD (overlay-style, hidden by default)     -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div id="onboarding-overlay" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(20,12,60,0.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:24px;" onclick="closeOnboardingIfBg(event)">
+  <div class="card" style="max-width:540px;width:100%;padding:36px;position:relative;" onclick="event.stopPropagation()">
+    <button onclick="closeOnboarding()" style="position:absolute;top:16px;right:18px;background:none;border:none;color:var(--text-dim);font-size:1.4rem;cursor:pointer;line-height:1;">×</button>
+
+    <div style="font-size:1.6rem;margin-bottom:6px;">👋</div>
+    <h2 style="font-size:1.35rem;font-weight:800;margin:0 0 4px;">Welcome! Let's find your starting point</h2>
+    <p style="font-size:0.88rem;color:var(--text-dim);margin:0 0 28px;">Three quick questions — we'll personalise everything for you.</p>
+
+    <!-- Step 1 -->
+    <div class="onboarding-step active" id="step-1">
+      <div style="font-weight:700;margin-bottom:14px;">Step 1 — What do you negotiate most?</div>
+      <div class="scenario-grid">
+        <div class="scenario-tile" onclick="selectScenario(this)">
+          <div class="icon">💼</div>Salary
+        </div>
+        <div class="scenario-tile" onclick="selectScenario(this)">
+          <div class="icon">🏠</div>Rent
+        </div>
+        <div class="scenario-tile" onclick="selectScenario(this)">
+          <div class="icon">💻</div>Freelance
+        </div>
+        <div class="scenario-tile" onclick="selectScenario(this)">
+          <div class="icon">🤝</div>B2B Sales
+        </div>
+        <div class="scenario-tile" onclick="selectScenario(this)">
+          <div class="icon">🛒</div>Purchases
+        </div>
+        <div class="scenario-tile" onclick="selectScenario(this)">
+          <div class="icon">⚡</div>Other
+        </div>
+      </div>
+      <div style="margin-top:24px;display:flex;justify-content:flex-end;">
+        <button class="btn-primary" onclick="nextStep(2)">Next →</button>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="onboarding-step" id="step-2">
+      <div style="font-weight:700;margin-bottom:14px;">Step 2 — How confident are you right now?</div>
+      <div class="emoji-slider">
+        <button class="emoji-btn" onclick="selectEmoji(this)" title="Not at all">😰<div style="font-size:0.65rem;margin-top:4px;color:var(--text-dim);">Nervous</div></button>
+        <button class="emoji-btn" onclick="selectEmoji(this)" title="A little">😟<div style="font-size:0.65rem;margin-top:4px;color:var(--text-dim);">Uneasy</div></button>
+        <button class="emoji-btn" onclick="selectEmoji(this)" title="Okay">😐<div style="font-size:0.65rem;margin-top:4px;color:var(--text-dim);">Okay</div></button>
+        <button class="emoji-btn" onclick="selectEmoji(this)" title="Pretty good">🙂<div style="font-size:0.65rem;margin-top:4px;color:var(--text-dim);">Decent</div></button>
+        <button class="emoji-btn" onclick="selectEmoji(this)" title="Confident">😎<div style="font-size:0.65rem;margin-top:4px;color:var(--text-dim);">Confident</div></button>
+      </div>
+      <div style="margin-top:24px;display:flex;justify-content:space-between;">
+        <button class="btn-ghost" onclick="nextStep(1)">← Back</button>
+        <button class="btn-primary" onclick="nextStep(3)">Next →</button>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="onboarding-step" id="step-3">
+      <div style="text-align:center;padding:20px 0;">
+        <div style="font-size:3.5rem;animation:floatFace 3s ease-in-out infinite;display:inline-block;">🚀</div>
+        <h3 style="font-size:1.25rem;font-weight:800;margin:16px 0 8px;">Your first practice is ready!</h3>
+        <p style="color:var(--text-dim);font-size:0.92rem;line-height:1.6;margin:0 0 24px;">
+          We've set up a personalised scenario based on your answers.<br/>
+          Remember — every attempt makes you better, even imperfect ones.
+        </p>
+        <div class="card card-amber" style="padding:18px;margin-bottom:24px;text-align:left;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span>💼</span>
+            <span style="font-weight:700;">Starter: Salary Negotiation — Entry Level</span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <span class="diff-dot filled"></span>
+            <span class="diff-dot empty"></span>
+            <span class="diff-dot empty"></span>
+            <span style="font-size:0.78rem;color:var(--text-dim);margin-left:4px;">Beginner friendly</span>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="closeOnboarding();fireConfetti();" style="width:100%;justify-content:center;padding:16px;">
+          Let's go! 🎯
+        </button>
+      </div>
+    </div>
+
+    <!-- Step dots -->
+    <div class="step-dots">
+      <div class="step-dot done"   id="dot-1"></div>
+      <div class="step-dot active" id="dot-2"></div>
+      <div class="step-dot"        id="dot-3"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  TODAY'S PRACTICE                                       -->
+<!-- ─────────────────────────────────────────────────────── -->
+<section class="section" style="padding-top:20px;" id="practice">
+  <div style="max-width:900px;margin:0 auto;padding:0 24px;">
+    <div class="section-label">Recommended for You</div>
+    <h2 style="font-size:1.5rem;font-weight:800;margin:0 0 20px;">Today's Practice</h2>
+
+    <!-- Daily tip -->
+    <div class="card" style="padding:22px;margin-bottom:20px;background:linear-gradient(135deg,rgba(124,92,255,0.18),rgba(26,17,71,0.6));border-color:rgba(124,92,255,0.35);">
+      <div style="display:flex;align-items:flex-start;gap:16px;">
+        <span class="tip-bulb">💡</span>
+        <div>
+          <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#a78bff;margin-bottom:4px;">Today's Coaching Tip</div>
+          <div style="font-weight:600;font-size:0.98rem;margin-bottom:6px;">"The person who speaks first after the offer rarely wins."</div>
+          <div style="font-size:0.84rem;color:var(--text-dim);">After naming your number, stay quiet for at least 5 seconds. Silence creates space for the other party to move toward you.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <!-- Scenario card -->
+      <div class="card card-amber" style="padding:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+          <span class="pill pill-amber">Recommended</span>
+          <span style="font-size:1.6rem;">💼</span>
+        </div>
+        <div style="font-weight:800;font-size:1.05rem;margin-bottom:6px;">Salary Negotiation — Mid Level</div>
+        <div style="font-size:0.84rem;color:var(--text-dim);margin-bottom:16px;line-height:1.5;">
+          Practice anchoring your value in a performance review. You know what you're worth — can you communicate it?
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:20px;">
+          <span class="diff-dot filled"></span>
+          <span class="diff-dot filled"></span>
+          <span class="diff-dot empty"></span>
+          <span style="font-size:0.78rem;color:var(--text-dim);margin-left:4px;">Intermediate</span>
+        </div>
+        <button class="btn-primary" style="width:100%;text-align:center;">Start Practice</button>
+      </div>
+
+      <!-- Progress recap -->
+      <div class="card" style="padding:24px;">
+        <div class="section-label" style="margin-bottom:12px;">Your Week</div>
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:6px;">
+            <span style="color:var(--text-dim);">Sessions this week</span>
+            <span style="font-weight:700;color:var(--emerald);">4 / 5</span>
+          </div>
+          <div class="progress-bar-track"><div class="progress-bar-fill" style="width:80%;"></div></div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:6px;">
+            <span style="color:var(--text-dim);">Avg. outcome score</span>
+            <span style="font-weight:700;color:var(--amber);">72%</span>
+          </div>
+          <div class="progress-bar-track"><div class="progress-bar-fill" style="width:72%;background:linear-gradient(90deg,var(--amber),#ffcc70);"></div></div>
+        </div>
+        <div style="margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:6px;">
+            <span style="color:var(--text-dim);">Streak</span>
+            <span style="font-weight:700;">🔥 4 days</span>
+          </div>
+        </div>
+        <a href="#path" style="font-size:0.85rem;color:var(--coach-purple);text-decoration:none;">Or choose your own scenario →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  LEARNING PATH                                          -->
+<!-- ─────────────────────────────────────────────────────── -->
+<section class="section" id="path">
+  <div style="max-width:900px;margin:0 auto;padding:0 24px;">
+    <div class="section-label">Your Journey</div>
+    <h2 style="font-size:1.5rem;font-weight:800;margin:0 0 6px;">Learning Path</h2>
+    <p style="color:var(--text-dim);font-size:0.9rem;margin:0 0 32px;">You're on Module 3 of 8 — keep going, you're building real skill.</p>
+
+    <!-- Goal gradient progress bar -->
+    <div style="margin-bottom:36px;">
+      <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:8px;">
+        <span style="color:var(--text-dim);">Overall progress</span>
+        <span style="color:var(--emerald);font-weight:700;">Module 3 / 8</span>
+      </div>
+      <div class="progress-bar-track" style="height:12px;">
+        <div class="progress-bar-fill" style="width:31%;"></div>
+      </div>
+    </div>
+
+    <!-- Path nodes -->
+    <div class="path-container">
+      <div class="path-line"></div>
+
+      <!-- Node 1 — done -->
+      <div class="path-node-row">
+        <div class="path-label">
+          <div style="font-weight:700;color:var(--emerald);">The Opener</div>
+          <div style="font-size:0.78rem;color:var(--text-dim);margin-top:2px;">First moves, anchoring, framing</div>
+          <span class="pill pill-emerald" style="margin-top:6px;display:inline-block;">Completed</span>
+        </div>
+        <div class="path-node node-done">✓</div>
+        <div style="flex:1;"></div>
+      </div>
+
+      <!-- Node 2 — done -->
+      <div class="path-node-row">
+        <div style="flex:1;"></div>
+        <div class="path-node node-done">✓</div>
+        <div class="path-label">
+          <div style="font-weight:700;color:var(--emerald);">Reading the Room</div>
+          <div style="font-size:0.78rem;color:var(--text-dim);margin-top:2px;">Signals, body language, tone</div>
+          <span class="pill pill-emerald" style="margin-top:6px;display:inline-block;">Completed</span>
+        </div>
+      </div>
+
+      <!-- Node 3 — current -->
+      <div class="path-node-row">
+        <div class="path-label">
+          <div style="font-weight:700;color:var(--amber);">The Power of Silence</div>
+          <div style="font-size:0.78rem;color:var(--text-dim);margin-top:2px;">Pause tactics, waiting strategies</div>
+          <span class="pill pill-amber" style="margin-top:6px;display:inline-block;">In Progress →</span>
+        </div>
+        <div class="path-node node-current">3</div>
+        <div style="flex:1;"></div>
+      </div>
+
+      <!-- Node 4 — locked -->
+      <div class="path-node-row">
+        <div style="flex:1;"></div>
+        <div class="path-node node-locked">4</div>
+        <div class="path-label">
+          <div style="font-weight:600;color:rgba(255,255,255,0.40);">Making Concessions</div>
+          <div style="font-size:0.78rem;color:rgba(255,255,255,0.25);margin-top:2px;">Strategic giving, trading value</div>
+        </div>
+      </div>
+
+      <!-- Node 5 -->
+      <div class="path-node-row">
+        <div class="path-label">
+          <div style="font-weight:600;color:rgba(255,255,255,0.40);">Closing Strong</div>
+          <div style="font-size:0.78rem;color:rgba(255,255,255,0.25);margin-top:2px;">Commitment, finalising, follow-up</div>
+        </div>
+        <div class="path-node node-locked">5</div>
+        <div style="flex:1;"></div>
+      </div>
+
+      <!-- Node 6 -->
+      <div class="path-node-row">
+        <div style="flex:1;"></div>
+        <div class="path-node node-locked">6</div>
+        <div class="path-label">
+          <div style="font-weight:600;color:rgba(255,255,255,0.40);">Advanced Tactics</div>
+          <div style="font-size:0.78rem;color:rgba(255,255,255,0.25);margin-top:2px;">BATNA, deadline pressure, anchors</div>
+        </div>
+      </div>
+
+      <!-- Node 7 -->
+      <div class="path-node-row">
+        <div class="path-label">
+          <div style="font-weight:600;color:rgba(255,255,255,0.40);">Style Mastery</div>
+          <div style="font-size:0.78rem;color:rgba(255,255,255,0.25);margin-top:2px;">Adaptive style, reading people</div>
+        </div>
+        <div class="path-node node-locked">7</div>
+        <div style="flex:1;"></div>
+      </div>
+
+      <!-- Node 8 -->
+      <div class="path-node-row" style="margin-bottom:0;">
+        <div style="flex:1;"></div>
+        <div class="path-node node-locked" style="background:rgba(245,166,35,0.08);border-color:rgba(245,166,35,0.25);font-size:1.2rem;width:52px;height:52px;">🏆</div>
+        <div class="path-label">
+          <div style="font-weight:600;color:rgba(255,255,255,0.40);">Expert Mode</div>
+          <div style="font-size:0.78rem;color:rgba(255,255,255,0.25);margin-top:2px;">Complex multi-party deals</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  NEGOTIATION DNA                                        -->
+<!-- ─────────────────────────────────────────────────────── -->
+<section class="section" id="dna">
+  <div style="max-width:900px;margin:0 auto;padding:0 24px;">
+    <div class="section-label">About You</div>
+    <h2 style="font-size:1.5rem;font-weight:800;margin:0 0 6px;">Your Negotiation DNA</h2>
+    <p style="color:var(--text-dim);font-size:0.9rem;margin:0 0 32px;">Every negotiation reveals more about your natural style. Keep playing to see the full picture.</p>
+
+    <div class="card" style="padding:32px;">
+      <div style="display:flex;flex-wrap:wrap;gap:32px;align-items:center;">
+        <!-- Radar SVG -->
+        <div class="radar-wrap" style="flex-shrink:0;">
+          <svg width="240" height="240" viewBox="0 0 240 240">
+            <!-- Background hexagon rings -->
+            <g opacity="0.12" stroke="white" fill="none" stroke-width="1">
+              <polygon points="120,20 206,70 206,170 120,220 34,170 34,70" />
+              <polygon points="120,40 193,82.5 193,157.5 120,200 47,157.5 47,82.5" />
+              <polygon points="120,60 181,95 181,145 120,180 59,145 59,95" />
+              <polygon points="120,80 168,107.5 168,132.5 120,160 72,132.5 72,107.5" />
+            </g>
+            <!-- Axis lines -->
+            <g opacity="0.20" stroke="white" fill="none" stroke-width="1">
+              <line x1="120" y1="20"  x2="120" y2="220"/>
+              <line x1="34"  y1="70"  x2="206" y2="170"/>
+              <line x1="34"  y1="170" x2="206" y2="70"/>
+            </g>
+            <!-- Filled area — partial scores -->
+            <polygon
+              points="120,48 179,88 185,148 120,185 68,148 55,80"
+              fill="rgba(124,92,255,0.30)"
+              stroke="#7c5cff"
+              stroke-width="2"
+              stroke-linejoin="round"
+              style="filter:drop-shadow(0 0 8px rgba(124,92,255,0.5));"
+            />
+            <!-- Score dots -->
+            <circle cx="120" cy="48"  r="5" fill="#f5a623" style="filter:drop-shadow(0 0 6px #f5a623);"/>
+            <circle cx="179" cy="88"  r="5" fill="#f5a623" style="filter:drop-shadow(0 0 6px #f5a623);"/>
+            <circle cx="185" cy="148" r="5" fill="#f5a623" style="filter:drop-shadow(0 0 6px #f5a623);"/>
+            <circle cx="120" cy="185" r="5" fill="#f5a623" style="filter:drop-shadow(0 0 6px #f5a623);"/>
+            <!-- Unscored dots -->
+            <circle cx="68"  cy="148" r="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-dasharray="3,2"/>
+            <circle cx="55"  cy="80"  r="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-dasharray="3,2"/>
+            <!-- Labels -->
+            <text x="120" y="14"  text-anchor="middle" fill="white" font-size="9" font-family="sans-serif" opacity="0.85">Opening Strength</text>
+            <text x="215" y="84"  text-anchor="start"  fill="white" font-size="9" font-family="sans-serif" opacity="0.85">Info Gathering</text>
+            <text x="215" y="170" text-anchor="start"  fill="white" font-size="9" font-family="sans-serif" opacity="0.85">Concessions</text>
+            <text x="120" y="230" text-anchor="middle" fill="white" font-size="9" font-family="sans-serif" opacity="0.85">BATNA Leverage</text>
+            <text x="24"  y="170" text-anchor="end"    fill="#a78bff" font-size="9" font-family="sans-serif" opacity="0.70">EQ ↗</text>
+            <text x="24"  y="84"  text-anchor="end"    fill="#a78bff" font-size="9" font-family="sans-serif" opacity="0.70">Value ↗</text>
+          </svg>
+        </div>
+
+        <!-- Dimension list -->
+        <div style="flex:1;min-width:220px;">
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <!-- scored -->
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:5px;">
+                <span style="font-weight:600;">Opening Strength</span>
+                <span style="color:var(--emerald);font-weight:700;">82%</span>
+              </div>
+              <div class="progress-bar-track"><div class="progress-bar-fill" style="width:82%;"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:5px;">
+                <span style="font-weight:600;">Concession Strategy</span>
+                <span style="color:var(--amber);font-weight:700;">68%</span>
+              </div>
+              <div class="progress-bar-track"><div class="progress-bar-fill" style="width:68%;background:linear-gradient(90deg,var(--amber),#ffcc70);"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:5px;">
+                <span style="font-weight:600;">BATNA Leverage</span>
+                <span style="color:var(--amber);font-weight:700;">55%</span>
+              </div>
+              <div class="progress-bar-track"><div class="progress-bar-fill" style="width:55%;background:linear-gradient(90deg,var(--amber),#ffcc70);"></div></div>
+            </div>
+            <!-- unscored -->
+            <div style="opacity:0.50;">
+              <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:5px;">
+                <span style="font-weight:600;">Info Gathering</span>
+                <span style="font-size:0.75rem;color:var(--text-dim);">Play more to unlock</span>
+              </div>
+              <div class="progress-bar-track"><div style="height:100%;border-radius:50px;background:repeating-linear-gradient(90deg,rgba(255,255,255,0.15) 0px,rgba(255,255,255,0.15) 6px,transparent 6px,transparent 12px);width:100%;"></div></div>
+            </div>
+            <div style="opacity:0.50;">
+              <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:5px;">
+                <span style="font-weight:600;">Emotional Intelligence</span>
+                <span style="font-size:0.75rem;color:var(--text-dim);">Play more to unlock</span>
+              </div>
+              <div class="progress-bar-track"><div style="height:100%;border-radius:50px;background:repeating-linear-gradient(90deg,rgba(255,255,255,0.15) 0px,rgba(255,255,255,0.15) 6px,transparent 6px,transparent 12px);width:100%;"></div></div>
+            </div>
+            <div style="opacity:0.50;">
+              <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:5px;">
+                <span style="font-weight:600;">Value Creation</span>
+                <span style="font-size:0.75rem;color:var(--text-dim);">Play more to unlock</span>
+              </div>
+              <div class="progress-bar-track"><div style="height:100%;border-radius:50px;background:repeating-linear-gradient(90deg,rgba(255,255,255,0.15) 0px,rgba(255,255,255,0.15) 6px,transparent 6px,transparent 12px);width:100%;"></div></div>
+            </div>
+          </div>
+          <p style="font-size:0.8rem;color:var(--text-dim);margin-top:16px;font-style:italic;">Complete 3 more sessions to reveal your full profile.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  COACH'S NOTES                                          -->
+<!-- ─────────────────────────────────────────────────────── -->
+<section class="section">
+  <div style="max-width:900px;margin:0 auto;padding:0 24px;">
+    <div class="section-label">Personalised Feedback</div>
+    <h2 style="font-size:1.5rem;font-weight:800;margin:0 0 20px;">Your Coach's Notes</h2>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
+      <!-- Strength -->
+      <div class="coach-note" style="border-color:rgba(0,214,143,0.30);background:rgba(0,214,143,0.07);">
+        <div class="note-icon" style="background:rgba(0,214,143,0.20);">💪</div>
+        <div>
+          <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--emerald);margin-bottom:4px;">You're strongest at</div>
+          <div style="font-weight:700;margin-bottom:4px;">Opening moves</div>
+          <div style="font-size:0.84rem;color:var(--text-dim);line-height:1.5;">Your anchoring is confident and well-timed. You set the frame early in 80% of your sessions.</div>
+        </div>
+      </div>
+
+      <!-- Focus area -->
+      <div class="coach-note" style="border-color:rgba(245,166,35,0.30);background:rgba(245,166,35,0.07);">
+        <div class="note-icon" style="background:rgba(245,166,35,0.20);">🎯</div>
+        <div>
+          <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--amber);margin-bottom:4px;">Focus area</div>
+          <div style="font-weight:700;margin-bottom:4px;">Information gathering</div>
+          <div style="font-size:0.84rem;color:var(--text-dim);line-height:1.5;">You tend to reveal your position before asking enough questions. Slow down in the discovery phase.</div>
+        </div>
+      </div>
+
+      <!-- Actionable tip -->
+      <div class="coach-note">
+        <div class="note-icon" style="background:rgba(124,92,255,0.25);">✨</div>
+        <div>
+          <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#a78bff;margin-bottom:4px;">Try this next session</div>
+          <div style="font-weight:700;margin-bottom:4px;">The 2-question rule</div>
+          <div style="font-size:0.84rem;color:var(--text-dim);line-height:1.5;">Ask 2 open questions before making any offer. What do they need? What's their timeline? Let them talk.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  ACHIEVEMENT GARDEN                                     -->
+<!-- ─────────────────────────────────────────────────────── -->
+<section class="section" id="garden">
+  <div style="max-width:900px;margin:0 auto;padding:0 24px;">
+    <div class="section-label">Your Growth</div>
+    <h2 style="font-size:1.5rem;font-weight:800;margin:0 0 6px;">Achievement Garden</h2>
+    <p style="color:var(--text-dim);font-size:0.9rem;margin:0 0 24px;">Your garden grows with every practice session. Each plant is a skill you've nurtured.</p>
+
+    <div class="card" style="padding:28px;">
+      <div class="garden-grid">
+        <!-- Blooming: first negotiation -->
+        <div class="garden-plot" style="border-style:solid;border-color:rgba(0,214,143,0.40);background:rgba(0,214,143,0.07);">
+          <div class="garden-soil"></div>
+          <div class="garden-plant">🌸</div>
+          <div class="garden-label">First Step<br/><span style="color:var(--emerald);font-weight:600;">Earned!</span></div>
+        </div>
+
+        <!-- Tree: 5-session streak -->
+        <div class="garden-plot" style="border-style:solid;border-color:rgba(0,214,143,0.40);background:rgba(0,214,143,0.07);">
+          <div class="garden-soil"></div>
+          <div class="garden-plant">🌳</div>
+          <div class="garden-label">Week Streak<br/><span style="color:var(--emerald);font-weight:600;">Earned!</span></div>
+        </div>
+
+        <!-- Growing: opener mastery -->
+        <div class="garden-plot" style="border-style:solid;border-color:rgba(245,166,35,0.35);background:rgba(245,166,35,0.05);">
+          <div class="garden-soil" style="background:linear-gradient(0deg,rgba(245,166,35,0.12),transparent);"></div>
+          <div class="garden-plant">🌿</div>
+          <div class="garden-label">Opener Master<br/><span style="color:var(--amber);font-weight:600;">Growing...</span></div>
+        </div>
+
+        <!-- Seed: silence tactic -->
+        <div class="garden-plot" style="border-style:solid;border-color:rgba(124,92,255,0.25);background:rgba(124,92,255,0.04);">
+          <div class="garden-soil" style="background:linear-gradient(0deg,rgba(124,92,255,0.10),transparent);"></div>
+          <div class="garden-plant" style="font-size:1.4rem;opacity:0.7;">🌱</div>
+          <div class="garden-label">Silence Pro<br/><span style="color:#a78bff;font-weight:600;">Just planted</span></div>
+        </div>
+
+        <!-- Empty plot 1 -->
+        <div class="garden-plot">
+          <div style="font-size:1.4rem;opacity:0.25;">🪴</div>
+          <div class="garden-label" style="opacity:0.40;">Empty plot<br/>Keep practising</div>
+        </div>
+
+        <!-- Empty plot 2 -->
+        <div class="garden-plot">
+          <div style="font-size:1.4rem;opacity:0.25;">🪴</div>
+          <div class="garden-label" style="opacity:0.40;">Empty plot<br/>Keep practising</div>
+        </div>
+      </div>
+
+      <p style="text-align:center;font-size:0.85rem;color:var(--text-dim);margin:20px 0 0;">
+        4 plants growing · 2 plots waiting to bloom ·
+        <span style="color:var(--coach-purple);cursor:pointer;">See all achievements →</span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  COMMUNITY & FEEDBACK                                   -->
+<!-- ─────────────────────────────────────────────────────── -->
+<section class="section" id="community">
+  <div style="max-width:900px;margin:0 auto;padding:0 24px;">
+    <div class="section-label">Community</div>
+    <h2 style="font-size:1.5rem;font-weight:800;margin:0 0 6px;">How Was Your Last Session?</h2>
+    <p style="color:var(--text-dim);font-size:0.9rem;margin:0 0 24px;">Your feedback helps our AI coach learn and get better for everyone.</p>
+
+    <!-- Emoji rating -->
+    <div class="card" style="padding:28px;margin-bottom:20px;">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:0.88rem;color:var(--text-dim);margin-bottom:14px;">Rate your last practice session</div>
+        <div class="emoji-slider" style="max-width:320px;margin:0 auto;" id="feedback-faces">
+          <button class="feedback-face" onclick="selectFeedback(this)" title="Frustrated">😤</button>
+          <button class="feedback-face" onclick="selectFeedback(this)" title="Meh">😐</button>
+          <button class="feedback-face" onclick="selectFeedback(this)" title="Good">🙂</button>
+          <button class="feedback-face" onclick="selectFeedback(this)" title="Great" style="filter:grayscale(0);transform:scale(1.2);">😄</button>
+          <button class="feedback-face selected" onclick="selectFeedback(this)" title="Amazing">🤩</button>
+        </div>
+      </div>
+
+      <!-- Text input -->
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:0.85rem;color:var(--text-dim);margin-bottom:8px;">Share a tip with the community (optional)</label>
+        <textarea
+          placeholder="e.g. 'Waiting 5 seconds after naming my number actually worked...'"
+          style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:#fff;padding:12px 14px;font-size:0.9rem;resize:vertical;min-height:80px;font-family:inherit;box-sizing:border-box;outline:none;transition:border-color 0.2s;"
+          onfocus="this.style.borderColor='rgba(124,92,255,0.60)'"
+          onblur="this.style.borderColor='rgba(255,255,255,0.12)'"
+        ></textarea>
+      </div>
+      <button class="btn-primary" style="font-size:0.9rem;padding:11px 28px;">Send Feedback</button>
+    </div>
+
+    <!-- Community insights -->
+    <div style="margin-bottom:8px;font-weight:700;font-size:0.95rem;">What others are learning</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">
+      <div class="insight-card">
+        <div style="padding-top:16px;line-height:1.55;">Practicing silence after my anchor completely changed outcomes. The other party filled the gap every time.</div>
+        <div style="margin-top:10px;font-size:0.75rem;opacity:0.50;">Anonymous · Salary scenario</div>
+      </div>
+      <div class="insight-card">
+        <div style="padding-top:16px;line-height:1.55;">I used to reveal my budget too early. Three sessions of the information module cured that habit.</div>
+        <div style="margin-top:10px;font-size:0.75rem;opacity:0.50;">Anonymous · Freelance scenario</div>
+      </div>
+      <div class="insight-card">
+        <div style="padding-top:16px;line-height:1.55;">The BATNA exercise made me realise I always undervalue my alternatives. Real shift in mindset.</div>
+        <div style="margin-top:10px;font-size:0.75rem;opacity:0.50;">Anonymous · B2B scenario</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  FOOTER                                                 -->
+<!-- ─────────────────────────────────────────────────────── -->
+<footer style="border-top:1px solid rgba(255,255,255,0.07);padding:48px 0 32px;">
+  <div style="max-width:900px;margin:0 auto;padding:0 24px;">
+    <div style="display:flex;flex-wrap:wrap;gap:24px;justify-content:space-between;align-items:flex-start;margin-bottom:32px;">
+      <div>
+        <div style="font-weight:800;font-size:1.05rem;margin-bottom:6px;">DealSim</div>
+        <div style="font-size:0.84rem;color:var(--text-dim);max-width:280px;line-height:1.6;">Part of the <span style="color:var(--coach-purple);font-weight:600;">SimVerse</span> family of AI learning tools. Built to help people grow through safe, intelligent practice.</div>
+      </div>
+      <div style="display:flex;gap:32px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;">Product</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <a href="#" style="font-size:0.88rem;color:rgba(255,255,255,0.60);text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.60)'">How it works</a>
+            <a href="#path" style="font-size:0.88rem;color:rgba(255,255,255,0.60);text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.60)'">Learning path</a>
+            <a href="#" style="font-size:0.88rem;color:rgba(255,255,255,0.60);text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.60)'">Scenarios</a>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;">Trust</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <a href="privacy.html" style="font-size:0.88rem;color:rgba(255,255,255,0.60);text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.60)'">Privacy</a>
+            <a href="#" style="font-size:0.88rem;color:rgba(255,255,255,0.60);text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.60)'">About SimVerse</a>
+            <a href="#" style="font-size:0.88rem;color:rgba(255,255,255,0.60);text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.60)'">Send Feedback</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;padding-top:20px;border-top:1px solid rgba(255,255,255,0.06);">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:1rem;">🔒</span>
+        <span style="font-size:0.82rem;color:var(--text-dim);">Your data is private. We use it only to help you improve.</span>
+      </div>
+      <div style="font-size:0.80rem;color:rgba(255,255,255,0.30);">© 2025 SimVerse. All rights reserved.</div>
+    </div>
+  </div>
+</footer>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  JAVASCRIPT                                             -->
+<!-- ─────────────────────────────────────────────────────── -->
+<script>
+  /* ── Onboarding ─────────────────────────────────────── */
+  let currentStep = 1;
+
+  function showOnboarding() {
+    const overlay = document.getElementById('onboarding-overlay');
+    overlay.style.display = 'flex';
+    goToStep(1);
+  }
+
+  function closeOnboarding() {
+    document.getElementById('onboarding-overlay').style.display = 'none';
+  }
+
+  function closeOnboardingIfBg(e) {
+    if (e.target === document.getElementById('onboarding-overlay')) closeOnboarding();
+  }
+
+  function nextStep(n) {
+    goToStep(n);
+  }
+
+  function goToStep(n) {
+    // Hide all steps
+    document.querySelectorAll('.onboarding-step').forEach(s => s.classList.remove('active'));
+    // Update dots
+    for (let i = 1; i <= 3; i++) {
+      const dot = document.getElementById('dot-' + i);
+      dot.classList.remove('active', 'done');
+      if (i < n) dot.classList.add('done');
+      else if (i === n) dot.classList.add('active');
+    }
+    // Show target step
+    const stepEl = document.getElementById('step-' + n);
+    if (stepEl) stepEl.classList.add('active');
+    currentStep = n;
+  }
+
+  function selectScenario(el) {
+    document.querySelectorAll('.scenario-tile').forEach(t => t.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function selectEmoji(el) {
+    el.closest('.emoji-slider').querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  /* ── Goals ──────────────────────────────────────────── */
+  function selectGoal(el) {
+    document.querySelectorAll('#goal-chips .goal-chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  /* ── Feedback faces ─────────────────────────────────── */
+  function selectFeedback(el) {
+    el.closest('#feedback-faces').querySelectorAll('.feedback-face').forEach(f => {
+      f.classList.remove('selected');
+      f.style.transform = '';
+      f.style.filter = 'grayscale(0.5)';
+    });
+    el.classList.add('selected');
+    el.style.transform = 'scale(1.35)';
+    el.style.filter = 'grayscale(0)';
+  }
+
+  /* ── Confetti ────────────────────────────────────────── */
+  function fireConfetti() {
+    const canvas = document.getElementById('confetti-canvas');
+    canvas.style.display = 'block';
+    const ctx = canvas.getContext('2d');
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const colors = ['#f5a623','#00d68f','#7c5cff','#ff6b6b','#54c8ff','#ff9ff3'];
+    const particles = [];
+
+    for (let i = 0; i < 120; i++) {
+      particles.push({
+        x:  Math.random() * canvas.width,
+        y: -10 - Math.random() * 100,
+        r:  4 + Math.random() * 5,
+        d:  Math.random() * 120 + 30,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        tilt: Math.random() * 20 - 10,
+        tiltAngle: 0,
+        tiltSpeed: 0.03 + Math.random() * 0.05,
+        vx: Math.random() * 4 - 2,
+        vy: 2 + Math.random() * 3,
+        alpha: 1,
+        shape: Math.random() > 0.5 ? 'rect' : 'circle'
+      });
+    }
+
+    let frame = 0;
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((p, i) => {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        if (p.shape === 'circle') {
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        } else {
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.tiltAngle);
+          ctx.rect(-p.r, -p.r / 2, p.r * 2, p.r);
+        }
+        ctx.fill();
+        ctx.restore();
+
+        p.x += p.vx;
+        p.y += p.vy;
+        p.tiltAngle += p.tiltSpeed;
+        if (p.y > canvas.height * 0.6) p.alpha -= 0.015;
+      });
+
+      frame++;
+      if (frame < 180) {
+        requestAnimationFrame(draw);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.style.display = 'none';
+      }
+    }
+    draw();
+  }
+
+  /* ── Animate progress bars on scroll ───────────────── */
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.width = entry.target.dataset.width;
+      }
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('.progress-bar-fill').forEach(bar => {
+    bar.dataset.width = bar.style.width;
+    bar.style.width = '0%';
+    observer.observe(bar);
+  });
+
+  /* ── Daily tip rotation ─────────────────────────────── */
+  const tips = [
+    { text: '"The person who speaks first after the offer rarely wins."', sub: 'After naming your number, stay quiet for at least 5 seconds. Silence creates space for the other party to move toward you.' },
+    { text: '"Negotiation is not about winning — it\'s about understanding."', sub: 'The more you understand the other party\'s real constraints, the more creative solutions you can find.' },
+    { text: '"Your BATNA is your real source of power."', sub: 'Before any negotiation, write down your best alternative. Knowing it clearly makes you calm under pressure.' },
+    { text: '"First offers anchor the entire conversation."', sub: 'Start higher than your target (or lower if buying). The middle ground tends to land near the opening position.' },
+    { text: '"Questions are your most underrated tool."', sub: 'Ask open questions early. Every answer they give reveals information you can use.' },
+    { text: '"Concede slowly and never give without getting."', sub: 'Each concession should feel like it costs you something. Free concessions train the other side to keep pushing.' },
+    { text: '"Deadlines are almost always softer than they appear."', sub: 'Ask why the deadline exists. Real deadlines have reasons. Artificial ones collapse under gentle questioning.' },
+  ];
+
+  // Pick today's tip based on day of year
+  const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+  const todaysTip = tips[dayOfYear % tips.length];
+  const tipEls = document.querySelectorAll('.tip-bulb');
+  if (tipEls.length) {
+    const tipContainer = tipEls[0].closest('.card');
+    if (tipContainer) {
+      const textEl = tipContainer.querySelectorAll('div')[2];
+      const subEl  = tipContainer.querySelectorAll('div')[3];
+      if (textEl) textEl.textContent = todaysTip.text;
+      if (subEl)  subEl.textContent  = todaysTip.sub;
+    }
+  }
+
+  /* ── Keyboard: Escape closes onboarding ─────────────── */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeOnboarding();
+  });
+</script>
+</body>
+</html>
