@@ -83,11 +83,13 @@ from dealsim_mvp.core.session import (
     SessionStatus,
     complete_session,
     create_session,
+    create_session_async,
     get_session_meta,
     get_session_state,
     get_session_status,
     get_transcript,
     negotiate,
+    negotiate_async,
 )
 from dealsim_mvp.core.scorer import generate_scorecard
 from dealsim_mvp.analytics import get_tracker
@@ -444,7 +446,9 @@ async def api_create_session(request: Request, body: CreateSessionRequest) -> Cr
         "opponent_params": body.opponent_params,
     }
     try:
-        sid, opening_turn = create_session(scenario=scenario)
+        # Use the app-level simulator (LLM or rule-based, configured at startup)
+        simulator = request.app.state.simulator
+        sid, opening_turn = await create_session_async(scenario=scenario, simulator=simulator)
     except Exception as exc:
         logger.exception("Failed to create session [request_id=%s]", req_id)
         raise _api_error(500, "Internal server error", "INTERNAL_ERROR", req_id) from exc
@@ -481,7 +485,7 @@ async def api_send_message(request: Request, session_id: str, body: SendMessageR
 
     _validate_session_id(session_id, req_id)
     try:
-        result = negotiate(session_id, body.message)
+        result = await negotiate_async(session_id, body.message)
     except KeyError:
         raise _api_error(404, f"Session not found", "SESSION_NOT_FOUND", req_id)
     except (ValueError, RuntimeError) as exc:

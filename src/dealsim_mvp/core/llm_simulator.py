@@ -18,6 +18,7 @@ Unit convention: all monetary values share the persona's currency unit.
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 import logging
 
 from dealsim_mvp.core.llm_client import LLMClient
@@ -35,6 +36,26 @@ from dealsim_mvp.core.simulator import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _run_async(coro):
+    """Run an async coroutine from synchronous code, event-loop-safe.
+
+    If no event loop is running (e.g. tests, CLI), uses ``asyncio.run()``.
+    If an event loop IS running (e.g. inside FastAPI/uvicorn), spins up a
+    short-lived thread with its own loop to avoid the ``RuntimeError:
+    This event loop is already running`` crash.
+    """
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        # No running loop — safe to use asyncio.run()
+        return asyncio.run(coro)
+
+    # There IS a running loop — run the coroutine in a new thread.
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(asyncio.run, coro)
+        return future.result()
 
 # ---------------------------------------------------------------------------
 # Negotiation instructions appended to every persona system_prompt
@@ -105,9 +126,13 @@ class LLMSimulator(SimulatorBase):
         Side effects (same as base class contract):
           - Sets state.opponent_last_offer and state.opponent_opening_anchor.
           - Appends the Turn to state.transcript.
+
+        Concurrency note:
+          If a running event loop exists (e.g. inside FastAPI), this creates a
+          new thread to run the coroutine. Otherwise uses asyncio.run() directly.
         """
         try:
-            return asyncio.run(self._async_opening(state))
+            return _run_async(self._async_opening(state))
         except Exception as exc:
             logger.warning(
                 "LLM opening_statement failed (%s: %s) — rule-based fallback",
@@ -132,7 +157,7 @@ class LLMSimulator(SimulatorBase):
         (including user-turn append and state mutation) so state stays consistent.
         """
         try:
-            return asyncio.run(self._async_generate(state, user_text))
+            return _run_async(self._async_generate(state, user_text))
         except Exception as exc:
             logger.warning(
                 "LLM generate_response failed (%s: %s) — rule-based fallback",

@@ -29,6 +29,12 @@ from dealsim_mvp.core.simulator import (
 )
 from dealsim_mvp.core.store import save_session, load_session, load_all_sessions
 
+# Conditional import — LLMSimulator may not be installed in all environments
+try:
+    from dealsim_mvp.core.llm_simulator import LLMSimulator as _LLMSimulator
+except ImportError:
+    _LLMSimulator = None  # type: ignore[misc,assignment]
+
 logger = logging.getLogger(__name__)
 
 
@@ -332,6 +338,98 @@ def create_session(
     )
     _store_session(session)
     return session_id, opening_turn
+
+
+async def create_session_async(
+    scenario: dict | None = None,
+    persona: NegotiationPersona | None = None,
+    simulator: SimulatorBase | None = None,
+) -> tuple[str, Turn]:
+    """Async variant of create_session.
+
+    When the simulator is an LLMSimulator, awaits the async opening_statement
+    to avoid the ``asyncio.run()`` inside-running-loop crash.  For any other
+    simulator (or when LLMSimulator is unavailable), delegates to the sync
+    ``create_session`` which works identically.
+    """
+    if persona is None:
+        if scenario is None:
+            scenario = {"type": "salary", "target_value": 100_000, "difficulty": "medium"}
+        persona = generate_persona_for_scenario(scenario)
+
+    sim = simulator or RuleBasedSimulator()
+    state = sim.initialize_state(persona)
+
+    session_id = str(uuid.uuid4())
+
+    # Use async opening if available
+    if _LLMSimulator is not None and isinstance(sim, _LLMSimulator):
+        opening_turn = await sim.opening_statement_async(state)
+    else:
+        opening_turn = sim.opening_statement(state)
+
+    _stype = scenario.get("type", "salary") if scenario else "salary"
+    _diff  = scenario.get("difficulty", "medium") if scenario else "medium"
+
+    session = NegotiationSession(
+        session_id=session_id,
+        persona=persona,
+        state=state,
+        simulator=sim,
+        opening_turn=opening_turn,
+        scenario_type=_stype,
+        difficulty=_diff,
+    )
+    _store_session(session)
+    return session_id, opening_turn
+
+
+async def negotiate_async(session_id: str, user_message: str) -> TurnResult:
+    """Async variant of negotiate.
+
+    When the session's simulator is an LLMSimulator, awaits the async
+    generate_response to avoid the ``asyncio.run()`` crash inside FastAPI.
+    """
+    session = _load_session(session_id)
+
+    if session.status != SessionStatus.ACTIVE:
+        raise RuntimeError(
+            f"Session {session_id} is {session.status.value} — cannot accept new turns."
+        )
+
+    # Use async generate if available
+    if _LLMSimulator is not None and isinstance(session.simulator, _LLMSimulator):
+        opp_turn = await session.simulator.generate_response_async(session.state, user_message)
+    else:
+        opp_turn = session.simulator.generate_response(session.state, user_message)
+
+    # Auto-complete after MAX_ROUNDS
+    if session.state.turn_count >= MAX_ROUNDS and not session.state.resolved:
+        session.state.resolved = True
+        if session.state.agreed_value is None:
+            user_last = session.state.user_last_offer
+            opp_last = session.state.opponent_last_offer
+            if user_last is not None and opp_last is not None:
+                session.state.agreed_value = (user_last + opp_last) / 2
+            elif opp_last is not None:
+                session.state.agreed_value = opp_last
+            elif user_last is not None:
+                session.state.agreed_value = user_last
+
+    if session.state.resolved:
+        session.status      = SessionStatus.COMPLETED
+        session.completed_at = datetime.now(timezone.utc)
+
+    _store_session(session)
+
+    return TurnResult(
+        turn_number=opp_turn.turn_number,
+        opponent_text=opp_turn.text,
+        opponent_offer=opp_turn.offer_amount,
+        resolved=session.state.resolved,
+        agreed_value=session.state.agreed_value,
+        session_status=session.status,
+    )
 
 
 def negotiate(session_id: str, user_message: str) -> TurnResult:

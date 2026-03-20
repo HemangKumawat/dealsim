@@ -679,6 +679,9 @@
           </form>
         </div>
 
+        <p id="ai-transparency-notice" class="text-center text-white/40 text-xs mt-4 hidden">
+          Responses powered by AI. <a href="/privacy" class="underline hover:text-white/60">See Privacy Policy.</a>
+        </p>
         <p class="text-center text-white/50 text-xs mt-6">
           Each session is private and not stored beyond your conversation.
         </p>
@@ -2412,8 +2415,10 @@
           .catch(() => {});
 
         // Track session count (feedback is opt-in via scorecard prompt)
-        const sessionCount = parseInt(localStorage.getItem('dealsim_session_count') || '0', 10) + 1;
-        localStorage.setItem('dealsim_session_count', sessionCount.toString());
+        try {
+          const sessionCount = parseInt(localStorage.getItem('dealsim_session_count') || '0', 10) + 1;
+          localStorage.setItem('dealsim_session_count', sessionCount.toString());
+        } catch (e) { /* localStorage unavailable (private browsing, storage full) */ }
       }
     }
 
@@ -4186,6 +4191,14 @@
        INIT ON PAGE LOAD
     ================================================================== */
     document.addEventListener('DOMContentLoaded', () => {
+      // AI transparency: check if LLM engine is active
+      fetch('/api/health').then(r => r.json()).then(data => {
+        if (data && data.simulator_engine === 'llm') {
+          var notice = document.getElementById('ai-transparency-notice');
+          if (notice) notice.classList.remove('hidden');
+        }
+      }).catch(() => {});
+
       loadDailyChallenge();
       recalcEarnings();
       // Initialize theme system
@@ -4211,7 +4224,8 @@
       });
 
       // Returning user recognition
-      const scores = JSON.parse(localStorage.getItem('dealsim_scores') || '[]');
+      let scores = [];
+      try { scores = JSON.parse(localStorage.getItem('dealsim_scores') || '[]'); } catch (e) { /* localStorage unavailable */ }
       if (scores.length > 0) {
         const best = Math.max(...scores.map(s => s.score || 0));
         const wb = document.createElement('p');

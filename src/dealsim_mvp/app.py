@@ -391,18 +391,18 @@ def create_app() -> FastAPI:
 <h1>DealSim Admin Dashboard</h1>
 
 <div class="card">
-  <div class="stat"><div class="stat-num">{stats['total_sessions']}</div><div class="stat-label">Sessions</div></div>
-  <div class="stat"><div class="stat-num">{stats['total_completed']}</div><div class="stat-label">Completed</div></div>
-  <div class="stat"><div class="stat-num">{stats['completion_rate']}%</div><div class="stat-label">Completion Rate</div></div>
-  <div class="stat"><div class="stat-num">{stats['average_score']}</div><div class="stat-label">Avg Score</div></div>
-  <div class="stat"><div class="stat-num">{stats['total_messages']}</div><div class="stat-label">Messages</div></div>
+  <div class="stat"><div class="stat-num">{html_escape(str(stats['total_sessions']))}</div><div class="stat-label">Sessions</div></div>
+  <div class="stat"><div class="stat-num">{html_escape(str(stats['total_completed']))}</div><div class="stat-label">Completed</div></div>
+  <div class="stat"><div class="stat-num">{html_escape(str(stats['completion_rate']))}%</div><div class="stat-label">Completion Rate</div></div>
+  <div class="stat"><div class="stat-num">{html_escape(str(stats['average_score']))}</div><div class="stat-label">Avg Score</div></div>
+  <div class="stat"><div class="stat-num">{html_escape(str(stats['total_messages']))}</div><div class="stat-label">Messages</div></div>
 </div>
 
 <div class="card">
-  <div class="stat"><div class="stat-num">{fb['total_feedback']}</div><div class="stat-label">Total Feedback</div></div>
-  <div class="stat"><div class="stat-num">{fb['average_rating']}</div><div class="stat-label">Avg Rating (1-5)</div></div>
-  <div class="stat"><div class="stat-num">{fb['feedback_with_comment_count']}</div><div class="stat-label">With Comments</div></div>
-  <div class="stat"><div class="stat-num">{fb['feedback_with_email_count']}</div><div class="stat-label">Left Email</div></div>
+  <div class="stat"><div class="stat-num">{html_escape(str(fb['total_feedback']))}</div><div class="stat-label">Total Feedback</div></div>
+  <div class="stat"><div class="stat-num">{html_escape(str(fb['average_rating']))}</div><div class="stat-label">Avg Rating (1-5)</div></div>
+  <div class="stat"><div class="stat-num">{html_escape(str(fb['feedback_with_comment_count']))}</div><div class="stat-label">With Comments</div></div>
+  <div class="stat"><div class="stat-num">{html_escape(str(fb['feedback_with_email_count']))}</div><div class="stat-label">Left Email</div></div>
 </div>
 
 <div class="grid">
