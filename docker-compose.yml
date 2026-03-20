@@ -46,6 +46,7 @@ services:
       # Persistent data directory (sessions, feedback, events)
       - app-data:/app/data
     networks:
+      - frontend   # needed for outbound HTTPS to external LLM APIs (DeepSeek, OpenAI, etc.)
       - backend
     expose:
       - "8000"

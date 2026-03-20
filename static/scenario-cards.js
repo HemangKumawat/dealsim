@@ -89,6 +89,8 @@
       '  cursor: pointer;',
       '  position: relative;',
       '  user-select: none;',
+      '  touch-action: manipulation;',
+      '  -webkit-tap-highlight-color: transparent;',
       '  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;',
       '}',
 

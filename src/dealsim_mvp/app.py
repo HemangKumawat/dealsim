@@ -34,6 +34,17 @@ from dealsim_mvp.monitoring import (
 from dealsim_mvp.rate_limiter import RateLimitMiddleware
 
 # ---------------------------------------------------------------------------
+# LLM configuration — read once at import time
+# ---------------------------------------------------------------------------
+_USE_LLM      = os.environ.get("DEALSIM_USE_LLM", "false").lower() in ("1", "true", "yes")
+_LLM_API_KEY  = os.environ.get("LLM_API_KEY", "").strip()
+_LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://api.deepseek.com/v1").strip()
+_LLM_MODEL    = os.environ.get("LLM_MODEL", "deepseek-chat").strip()
+_LLM_TEMPERATURE = float(os.environ.get("LLM_TEMPERATURE", "0.7"))
+_LLM_MAX_TOKENS  = int(os.environ.get("LLM_MAX_TOKENS", "300"))
+_LLM_TIMEOUT     = int(os.environ.get("LLM_TIMEOUT", "30"))
+
+# ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
 logging.basicConfig(
@@ -46,6 +57,56 @@ logger = logging.getLogger("dealsim")
 # ---------------------------------------------------------------------------
 # App factory
 # ---------------------------------------------------------------------------
+
+def _build_simulator():
+    """
+    Return the configured simulator instance.
+
+    When DEALSIM_USE_LLM=true and LLM_API_KEY is set, builds an LLMSimulator
+    backed by an LLMClient, with RuleBasedSimulator as the automatic fallback.
+    When disabled (default) or when the API key is absent, returns
+    RuleBasedSimulator directly so existing behaviour is completely unchanged.
+    """
+    from dealsim_mvp.core.simulator import RuleBasedSimulator
+
+    if not _USE_LLM or not _LLM_API_KEY:
+        if _USE_LLM and not _LLM_API_KEY:
+            logger.warning(
+                "DEALSIM_USE_LLM=true but LLM_API_KEY is not set — "
+                "falling back to rule-based simulator"
+            )
+        else:
+            logger.info("Simulator engine: rule_based")
+        return RuleBasedSimulator()
+
+    try:
+        from dealsim_mvp.core.llm_client import LLMClient, LLMConfig
+        from dealsim_mvp.core.llm_simulator import LLMSimulator
+
+        config = LLMConfig(
+            api_key=_LLM_API_KEY,
+            base_url=_LLM_BASE_URL,
+            model=_LLM_MODEL,
+            temperature=_LLM_TEMPERATURE,
+            max_tokens=_LLM_MAX_TOKENS,
+            timeout=_LLM_TIMEOUT,
+        )
+        llm_client = LLMClient(config)
+        fallback = RuleBasedSimulator()
+        simulator = LLMSimulator(client=llm_client, fallback=fallback)
+        logger.info(
+            "Simulator engine: llm (model=%s, base_url=%s)",
+            _LLM_MODEL,
+            _LLM_BASE_URL,
+        )
+        return simulator
+    except Exception:
+        logger.warning(
+            "Failed to initialise LLMSimulator — falling back to rule-based simulator",
+            exc_info=True,
+        )
+        return RuleBasedSimulator()
+
 
 def create_app() -> FastAPI:
     # Disable API docs in production (set DEALSIM_ENV=production)
@@ -111,6 +172,13 @@ def create_app() -> FastAPI:
             headers={"X-Request-ID": req_id},
         )
 
+    # -- Simulator selection ------------------------------------------------
+    # Resolved once at startup; stored on app.state so the health endpoint
+    # can inspect it without re-importing.
+    _simulator = _build_simulator()
+    app.state.simulator = _simulator
+    app.state.use_llm = _USE_LLM and bool(_LLM_API_KEY)
+
     # -- API routes ---------------------------------------------------------
     app.include_router(api_router)
 
@@ -123,6 +191,21 @@ def create_app() -> FastAPI:
         data = get_health_data(active_sessions=len(_SESSIONS))
         if not is_production:
             data["version"] = __version__
+
+        # Simulator status — check whether the active simulator is LLM-backed
+        # and, if so, whether it considers itself available.
+        sim = app.state.simulator
+        sim_name = type(sim).__name__
+        is_llm = sim_name == "LLMSimulator"
+        llm_available: bool = False
+        if is_llm:
+            try:
+                llm_available = sim.is_available()
+            except Exception:
+                llm_available = False
+
+        data["simulator_engine"] = "llm" if is_llm else "rule_based"
+        data["llm_available"] = llm_available
         return data
 
     # -- Static files & root HTML ------------------------------------------

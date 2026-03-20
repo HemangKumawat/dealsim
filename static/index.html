@@ -62,12 +62,47 @@
     /* Accessibility */
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border-width: 0; }
 
-    /* Mobile touch fix — eliminate 300ms tap delay and sticky hover */
-    button, [role="button"], [role="option"], [role="radio"], [onclick] {
+    /* Mobile touch fix — eliminate 300ms tap delay on all interactive elements */
+    button,
+    [role="button"],
+    [role="option"],
+    [role="radio"],
+    [onclick],
+    a,
+    input,
+    select,
+    textarea,
+    label,
+    summary,
+    .calc-preset,
+    .calc-mode-tab,
+    .diff-btn,
+    .star-btn,
+    .modal-star,
+    .fab-star,
+    .nav-link,
+    .quick-action-card,
+    .hero-cta,
+    .action-btn,
+    .db-cta-btn {
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
-    @media (hover: none) {
+
+    /* Range sliders: allow horizontal drag without triggering page scroll */
+    input[type="range"] {
+      touch-action: pan-x;
+    }
+
+    /* Ensure minimum 44px touch target on small interactive elements */
+    #nav-hamburger,
+    #feedback-fab {
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    /* Sticky hover fix: reset hover background changes on touch-only devices */
+    @media (hover: none) and (pointer: coarse) {
       .group:hover .group-hover\:opacity-100 { opacity: 0 !important; }
     }
 
@@ -209,6 +244,8 @@
       color: #fff; padding: 6px 14px; border-radius: 99px; font-size: 12px;
       cursor: pointer; z-index: 10; opacity: 0; pointer-events: none;
       transition: opacity 0.2s ease; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+      min-height: 36px;
     }
     #scroll-to-bottom.visible { opacity: 1; pointer-events: auto; }
 
@@ -605,6 +642,18 @@
               <label class="block text-sm font-medium text-white/70 mb-2" for="context">Describe the Situation</label>
               <textarea id="context" rows="4" placeholder="e.g. I have 3 years of experience in backend engineering and received an offer of $85k from a Series B startup..."
                 class="themed-input w-full rounded-xl px-4 py-3 text-white placeholder-white/25 focus-coral transition-colors resize-none leading-relaxed"></textarea>
+            </div>
+
+            <!-- Custom context -->
+            <div class="mb-5">
+              <label class="block text-sm font-medium text-white/70 mb-2" for="custom-context">Add context about your specific situation <span class="text-white/40 font-normal">(optional)</span></label>
+              <textarea id="custom-context" rows="3" maxlength="500"
+                placeholder="e.g., I'm negotiating with a startup that just raised Series A funding..."
+                class="themed-input w-full rounded-xl px-4 py-3 text-white placeholder-white/25 focus-coral transition-colors resize-none leading-relaxed"
+                oninput="document.getElementById('custom-context-counter').textContent = this.value.length"></textarea>
+              <div class="flex justify-end mt-1">
+                <span id="custom-context-counter" class="text-xs text-white/30">0</span><span class="text-xs text-white/30">/500</span>
+              </div>
             </div>
 
             <!-- Opponent tuner toggle -->
@@ -1090,11 +1139,17 @@
 
         <div id="playbook-main" class="print-white">
           <h2 class="text-2xl font-bold mb-2">&#x1F4CB; Your Negotiation Playbook</h2>
-          <p class="text-white/70 text-sm mb-8">A personalized cheat sheet based on your simulation.</p>
+          <p id="playbook-opening" class="text-white/70 text-sm mb-8">A personalized cheat sheet based on your simulation.</p>
 
           <div id="playbook-content" class="space-y-6">
             <div id="playbook-style-section" class="result-card rounded-2xl p-6 print-white">
-              <h3 class="font-semibold text-coral mb-3">Your Negotiation Style</h3>
+              <div class="flex items-start justify-between gap-4">
+                <h3 class="font-semibold text-coral mb-3">Your Negotiation Style</h3>
+                <div id="playbook-score-badge" class="hidden text-center shrink-0">
+                  <div id="playbook-score-num" class="text-2xl font-extrabold text-coral leading-none"></div>
+                  <div class="text-xs text-white/50 uppercase tracking-wide mt-0.5">/100</div>
+                </div>
+              </div>
               <div id="playbook-style" class="text-sm text-white/75 leading-relaxed">Generate a playbook after completing a negotiation.</div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1935,6 +1990,7 @@
       const scenario  = document.getElementById('scenario-type').value;
       const target    = document.getElementById('target-value').value.trim();
       const context   = document.getElementById('context').value.trim();
+      const customContext = document.getElementById('custom-context').value.trim();
       const difficulty = state.selectedDiff;
 
       if (!target) { showFormError('Please enter your target outcome.'); return; }
@@ -1950,6 +2006,7 @@
           context,
           opponent_params: state.tunerParams,
         };
+        if (customContext) body.custom_context = customContext;
 
         const res = await fetchWithTimeout('/api/sessions', {
           method: 'POST',
@@ -2320,6 +2377,7 @@
       // -- Gamification integration --
       if (window.DealSimGamification) {
         try {
+          var wasFirstSession = window.DealSimGamification.getProfile().totalSessions === 0;
           var result = window.DealSimGamification.recordSession({
             score: score,
             scenario: state.scenarioType || 'unknown',
@@ -2333,7 +2391,8 @@
           window.dispatchEvent(new CustomEvent('dealsim:sessionRecorded', { detail: { score: score, scenario: state.scenarioType } }));
           if (window.DealSimCelebrations && result) {
             if (result.newLevel) window.DealSimCelebrations.showLevelUp(result.newLevel, window.DealSimGamification.getLevel().xp);
-            if (score >= 85) window.DealSimCelebrations.showHighScore();
+            else if (wasFirstSession) window.DealSimCelebrations.showFirstSession();
+            else if (score >= 85) window.DealSimCelebrations.showHighScore();
             else if (result.isNewBest) window.DealSimCelebrations.showPersonalBest();
           }
         } catch (e) { console.warn('[gamification] Error recording session:', e); }
@@ -3122,23 +3181,50 @@
           thinkingChips.push({ label: 'Best Achievable', value: '$' + Math.round(data.optimal_outcome).toLocaleString() });
         }
         if (data.opponent_pressure) {
-          thinkingChips.push({ label: 'Pressure Level', value: escapeHtml(data.opponent_pressure) });
+          const pressureLabels = { low: 'Low — relaxed timeline', medium: 'Medium — some urgency', high: 'High — needs to close' };
+          thinkingChips.push({ label: 'Pressure Level', value: escapeHtml(pressureLabels[data.opponent_pressure] || data.opponent_pressure) });
         }
         if (data.outcome_grade) {
-          const gradeEmoji = { excellent: '???', good: '???', fair: '???', poor: '???', incomplete: 'ï¿½' };
-          thinkingChips.push({ label: 'Outcome Grade', value: (gradeEmoji[data.outcome_grade] || '') + ' ' + data.outcome_grade.charAt(0).toUpperCase() + data.outcome_grade.slice(1) });
+          const gradeEmoji  = { excellent: '⭐', good: '✔️', fair: '⚠️', poor: '❌', incomplete: '—' };
+          const gradeColors = { excellent: '#34d399', good: '#34d399', fair: '#fbbf24', poor: '#f95c5c', incomplete: 'rgba(255,255,255,0.45)' };
+          thinkingChips.push({
+            label: 'Outcome Grade',
+            value: (gradeEmoji[data.outcome_grade] || '') + ' ' + data.outcome_grade.charAt(0).toUpperCase() + data.outcome_grade.slice(1),
+            color: gradeColors[data.outcome_grade] || 'rgba(255,255,255,0.75)',
+          });
         }
-        let thinkingHtml = '<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">';
+        let thinkingHtml = '<div class="grid grid-cols-2 gap-3 sm:grid-cols-3 mb-5">';
         thinkingChips.forEach((c, i) => {
           thinkingHtml += '<div class="db-chip db-fade" style="animation-delay:' + (i * 0.06) + 's">'
             + '<span class="db-chip-label">' + c.label + '</span>'
-            + '<span class="db-chip-value">' + c.value + '</span>'
+            + '<span class="db-chip-value"' + (c.color ? ' style="color:' + c.color + '"' : '') + '>' + c.value + '</span>'
             + '</div>';
         });
         thinkingHtml += '</div>';
+
+        // Per-turn opponent state timeline
+        const allMoves = data.move_analysis || [];
+        const oppTurns = allMoves.filter(m => m.speaker === 'opponent');
+        if (oppTurns.length > 0) {
+          thinkingHtml += '<p style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:0.75rem">What they were doing turn by turn</p>'
+            + '<div class="space-y-3">';
+          oppTurns.forEach((m, i) => {
+            const moveLabel = (m.move_type || 'move').replace(/_/g, ' ');
+            const dotColor = m.strength === 'strong' ? '#34d399' : 'rgba(255,255,255,0.2)';
+            thinkingHtml += '<div class="db-fade flex gap-3 items-start" style="animation-delay:' + (i * 0.05 + 0.3) + 's">'
+              + '<div style="margin-top:5px;width:7px;height:7px;min-width:7px;border-radius:50%;background:' + dotColor + '"></div>'
+              + '<div>'
+              + '<span style="font-size:0.65rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:rgba(255,255,255,0.32)">Turn ' + m.turn_number + ' — ' + escapeHtml(moveLabel) + '</span>'
+              + '<p style="font-size:0.8125rem;color:rgba(255,255,255,0.75);line-height:1.5;margin-top:0.2rem">' + escapeHtml(m.analysis || 'Opponent responded.') + '</p>'
+              + '</div>'
+              + '</div>';
+          });
+          thinkingHtml += '</div>';
+        }
+
         if (data.hidden_constraints && data.hidden_constraints.length > 0) {
-          thinkingHtml += '<div class="db-chip mt-3 db-fade" style="animation-delay:' + (thinkingChips.length * 0.06) + 's">'
-            + '<span class="db-chip-label">Hidden Constraints</span>'
+          thinkingHtml += '<div class="db-chip mt-4 db-fade" style="animation-delay:' + (thinkingChips.length * 0.06 + 0.5) + 's">'
+            + '<span class="db-chip-label">Hidden Constraints — never revealed during play</span>'
             + '<ul class="space-y-1 mt-1">'
             + data.hidden_constraints.map(c => '<li class="db-chip-value text-xs flex gap-1.5"><span style="color:var(--accent)">&#x2022;</span>' + escapeHtml(c) + '</li>').join('')
             + '</ul></div>';
@@ -3147,8 +3233,35 @@
 
         // ---- 2. Money Left on Table ------------------------------------
         if (data.money_left_on_table !== undefined) {
-          document.getElementById('money-left-amount').textContent = '$' + Math.round(data.money_left_on_table).toLocaleString();
-          state.moneyLeftOnTable = data.money_left_on_table;
+          const amountEl = document.getElementById('money-left-amount');
+          const detailEl = document.getElementById('money-left-detail');
+          const moneyLeft = data.money_left_on_table;
+          amountEl.textContent = '$' + Math.round(moneyLeft).toLocaleString();
+          state.moneyLeftOnTable = moneyLeft;
+
+          // Color the big number by outcome grade
+          const gradeColor = { excellent: '#34d399', good: '#34d399', fair: '#fbbf24', poor: '#f95c5c', incomplete: 'rgba(255,255,255,0.45)' };
+          if (data.outcome_grade && gradeColor[data.outcome_grade]) {
+            amountEl.style.color = gradeColor[data.outcome_grade];
+          }
+
+          // Detail line: value captured context
+          if (data.outcome_grade === 'excellent') {
+            detailEl.textContent = 'You reached the opponent’s walk-away point. Nothing left to capture.';
+          } else if (data.outcome_grade === 'good') {
+            const pct = data.optimal_outcome && data.agreed_value !== undefined && data.agreed_value !== null
+              ? Math.round(Math.abs(data.agreed_value / data.optimal_outcome) * 100)
+              : null;
+            detailEl.textContent = pct !== null
+              ? 'You captured roughly ' + pct + '% of the available value. Strong result with a small gap left.'
+              : 'Strong result. A small gap remained before their walk-away point.';
+          } else if (data.outcome_grade === 'fair') {
+            detailEl.textContent = 'Moderate outcome. This amount was available between your deal and their true limit.';
+          } else if (data.outcome_grade === 'poor') {
+            detailEl.textContent = 'Significant value was available. Their walk-away point was $' + Math.round(data.optimal_outcome || 0).toLocaleString() + ' — you settled well before that.';
+          } else {
+            detailEl.textContent = 'No deal reached. This was the gap between your last offer and their walk-away point.';
+          }
         }
 
         // ---- 3. Conversation Replay ------------------------------------
@@ -3169,24 +3282,39 @@
           }
 
           const userMoves = moves.filter(m => m.speaker === 'user');
+          // Map: after user turn N, find the next opponent move's analysis
+          const oppReactionMap = {};
+          for (let mi = 0; mi < moves.length; mi++) {
+            if (moves[mi].speaker === 'user') {
+              for (let mj = mi + 1; mj < moves.length; mj++) {
+                if (moves[mj].speaker === 'opponent') {
+                  oppReactionMap[moves[mi].turn_number] = moves[mj];
+                  break;
+                }
+              }
+            }
+          }
 
           if (exchanges.length > 0) {
             replayEl.innerHTML = exchanges.map((ex, idx) => {
-              const userMove     = userMoves[idx] || null;
-              const isWeak       = userMove && userMove.strength === 'weak';
-              const isStrong     = userMove && userMove.strength === 'strong';
+              const userMove      = userMoves[idx] || null;
+              const isWeak        = userMove && userMove.strength === 'weak';
+              const isStrong      = userMove && userMove.strength === 'strong';
               const leverageClass = isWeak ? 'leverage-lost' : isStrong ? 'leverage-gained' : '';
 
-              const aiReasoning = userMove
-                ? escapeHtml(userMove.analysis || 'No analysis available.')
-                  + (userMove.missed_opportunity
-                    ? '<div class="db-replay-ai-note">Could have: ' + escapeHtml(userMove.missed_opportunity) + '</div>'
-                    : '')
-                : '<span style="opacity:0.4">No analysis for this turn.</span>';
+              // AI was thinking = opponent reaction to this user turn
+              const oppReaction = userMove ? oppReactionMap[userMove.turn_number] : null;
+              const aiReactionText = oppReaction
+                ? escapeHtml(oppReaction.analysis || 'Opponent responded.')
+                : (userMove ? escapeHtml(userMove.analysis || 'No analysis available.') : '<span style="opacity:0.4">No analysis for this turn.</span>');
+
+              const missedNote = userMove && userMove.missed_opportunity
+                ? '<div class="db-replay-ai-note">\u26a0\ufe0f Could have: ' + escapeHtml(userMove.missed_opportunity) + '</div>'
+                : '';
 
               const aiSaid = ex.aiMsg
                 ? '<div class="db-replay-ai-note mt-1">Said: &ldquo;'
-                  + escapeHtml(ex.aiMsg.text.length > 90 ? ex.aiMsg.text.slice(0, 90) + 'ï¿½' : ex.aiMsg.text)
+                  + escapeHtml(ex.aiMsg.text.length > 100 ? ex.aiMsg.text.slice(0, 100) + '\u2026' : ex.aiMsg.text)
                   + '&rdquo;</div>'
                 : '';
 
@@ -3194,10 +3322,11 @@
                 + '<div>'
                 + (leverageClass ? '<span class="db-replay-badge">' + (isWeak ? 'Lost leverage' : 'Gained leverage') + '</span>' : '')
                 + '<div class="db-replay-user">' + escapeHtml(ex.userMsg.text) + '</div>'
+                + missedNote
                 + '</div>'
                 + '<div>'
                 + '<span class="db-replay-opponent-label">AI was thinking</span>'
-                + '<div class="db-replay-ai">' + aiReasoning + '</div>'
+                + '<div class="db-replay-ai">' + aiReactionText + '</div>'
                 + aiSaid
                 + '</div>'
                 + '</div>';
@@ -3206,15 +3335,16 @@
             // No chatLog: fallback to move data only
             replayEl.innerHTML = userMoves.map((m, idx) => {
               const leverageClass = m.strength === 'weak' ? 'leverage-lost' : m.strength === 'strong' ? 'leverage-gained' : '';
+              const moveTypeLabel = (m.move_type || 'move').replace(/_/g, '\u00a0');
               return '<div class="db-replay-row ' + leverageClass + ' db-fade" style="animation-delay:' + (idx * 0.07) + 's">'
                 + '<div>'
                 + (leverageClass ? '<span class="db-replay-badge">' + (m.strength === 'weak' ? 'Lost leverage' : 'Gained leverage') + '</span>' : '')
-                + '<div class="db-replay-user"><em style="opacity:0.5">Turn ' + m.turn_number + ' ï¿½ ' + escapeHtml(m.move_type || 'move') + '</em></div>'
+                + '<div class="db-replay-user"><em style="opacity:0.5">Turn ' + m.turn_number + ' \u2014 ' + escapeHtml(moveTypeLabel) + '</em></div>'
+                + (m.missed_opportunity ? '<div class="db-replay-ai-note">\u26a0\ufe0f Could have: ' + escapeHtml(m.missed_opportunity) + '</div>' : '')
                 + '</div>'
                 + '<div>'
                 + '<span class="db-replay-opponent-label">AI was thinking</span>'
-                + '<div class="db-replay-ai">' + escapeHtml(m.analysis || '')
-                + (m.missed_opportunity ? '<div class="db-replay-ai-note">Could have: ' + escapeHtml(m.missed_opportunity) + '</div>' : '')
+                + '<div class="db-replay-ai">' + escapeHtml(m.analysis || 'No analysis.')
                 + '</div>'
                 + '</div>'
                 + '</div>';
@@ -3332,6 +3462,7 @@
       document.getElementById('playbook-weaknesses').innerHTML = '';
       document.getElementById('playbook-recommendations').innerHTML = '';
       document.getElementById('playbook-scenarios').innerHTML = '';
+      document.getElementById('playbook-score-badge').classList.add('hidden');
 
       try {
         const res = await fetchWithTimeout('/api/sessions/' + encodeURIComponent(state.sessionId) + '/playbook', {
@@ -3341,6 +3472,16 @@
 
         if (!res.ok) throw new Error('Not available');
         const data = await res.json();
+
+        // Overall score badge
+        if (typeof data.overall_score === 'number') {
+          const badge = document.getElementById('playbook-score-badge');
+          const numEl = document.getElementById('playbook-score-num');
+          numEl.textContent = data.overall_score;
+          const scoreColor = data.overall_score >= 70 ? 'text-emerald-400' : data.overall_score >= 40 ? 'text-yellow-400' : 'text-coral';
+          numEl.className = 'text-2xl font-extrabold leading-none ' + scoreColor;
+          badge.classList.remove('hidden');
+        }
 
         // Style profile
         document.getElementById('playbook-style').textContent = data.style_profile || 'Not available.';
@@ -4109,8 +4250,8 @@
   <!-- Floating feedback ï¿½ tiny, mostly transparent, playful on hover -->
   <div id="floating-feedback" class="fixed bottom-5 right-5 z-50">
     <button id="feedback-fab" onclick="toggleFeedbackPanel()" aria-label="Share feedback"
-      class="group w-8 h-8 rounded-full transition-all duration-300 hover:w-auto hover:px-3 hover:rounded-2xl hover:shadow-lg active:scale-95 flex items-center justify-center gap-1.5 overflow-hidden"
-      style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);">
+      class="group w-11 h-11 rounded-full transition-all duration-300 hover:w-auto hover:px-3 hover:rounded-2xl hover:shadow-lg active:scale-95 flex items-center justify-center gap-1.5 overflow-hidden"
+      style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); touch-action: manipulation; -webkit-tap-highlight-color: transparent;">
       <span class="text-sm opacity-30 group-hover:opacity-80 transition-all duration-300" id="feedback-fab-icon">??</span>
       <span class="max-w-0 group-hover:max-w-[80px] overflow-hidden transition-all duration-300 text-[11px] whitespace-nowrap opacity-0 group-hover:opacity-50" style="color: var(--text, #fff);">feedback</span>
     </button>

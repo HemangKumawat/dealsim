@@ -595,6 +595,7 @@ def generate_persona_for_scenario(scenario: dict) -> NegotiationPersona:
     scenario_type = scenario.get("type", "salary")
     target_value = scenario.get("target_value", 100000)
     difficulty = scenario.get("difficulty", "medium")
+    custom_context = scenario.get("custom_context") or ""
 
     templates = {
         "salary": SALARY_NEGOTIATION_TEMPLATES,
@@ -679,5 +680,11 @@ def generate_persona_for_scenario(scenario: dict) -> NegotiationPersona:
             persona.pressure = PressureLevel.LOW
         elif budget < 30:
             persona.pressure = PressureLevel.HIGH
+
+    # Inject user-supplied situational context into the persona's system prompt
+    # and hidden constraints so the opponent's behaviour reflects it.
+    if custom_context:
+        persona.system_prompt = persona.system_prompt.rstrip() + f"\n\nAdditional context: {custom_context}"
+        persona.hidden_constraints.append(f"Situational context provided by the user: {custom_context}")
 
     return persona

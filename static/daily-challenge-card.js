@@ -136,6 +136,79 @@
     refreshCard();
   }
 
+  // Award +50 XP when the daily challenge session completes.
+  // Listens for 'dealsim:sessionRecorded' which renderScorecard dispatches.
+  var BONUS_KEY = 'dealsim_challenge_xp_awarded';
+
+  function challengeBonusAlreadyAwarded() {
+    try { return localStorage.getItem(BONUS_KEY) === today(); } catch (_) { return true; }
+  }
+
+  function markChallengeBonusAwarded() {
+    try { localStorage.setItem(BONUS_KEY, today()); } catch (_) { /* quota */ }
+  }
+
+  function showToastIfAvailable(msg) {
+    // Prefer the shared toast system if present; fall back to console.
+    if (typeof window.showToast === 'function') {
+      window.showToast(msg, 3500);
+    } else {
+      var t = document.getElementById('toast');
+      if (t) {
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(function () { t.classList.remove('show'); }, 3500);
+      }
+    }
+  }
+
+  function awardChallengeXP() {
+    if (!done()) return;                         // Challenge not started today
+    if (challengeBonusAlreadyAwarded()) return;  // Already awarded this calendar day
+
+    var gam = window.DealSimGamification;
+    if (!gam) return;
+
+    // Load profile directly and add +50 XP so we don't double-count the session.
+    var profile = gam.getProfile();
+    var oldLevel = profile.level;
+
+    // Patch XP directly: DealSimGamification exposes no addXP, so we reach
+    // in via recordSession with score=0 + bonusXP flag. Instead, we recalculate
+    // via a tiny internal adjustment using the public profile + a scored bonus call
+    // that contributes only the bonus delta.
+    // recordSession(score=25) gives 50 XP base and is the cleanest supported path.
+    // We use score=0 to avoid polluting session stats — only XP matters here.
+    // Implementation: call recordSession with xpBonus workaround.
+    // Gamification doesn't expose addXP, so we use the profile save pattern via
+    // a read-modify-write through localStorage directly (mirrors gamification internals).
+    try {
+      var raw = localStorage.getItem('dealsim_profile');
+      if (raw) {
+        var p = JSON.parse(raw);
+        if (typeof p.xp === 'number') {
+          var prevLevel = Math.floor(Math.sqrt(p.xp / 100)) + 1;
+          p.xp += 50;
+          var newLevel = Math.floor(Math.sqrt(p.xp / 100)) + 1;
+          localStorage.setItem('dealsim_profile', JSON.stringify(p));
+          markChallengeBonusAwarded();
+
+          // Refresh the stats bar if present
+          if (window.DealSimStatsBar) window.DealSimStatsBar.update();
+
+          // Show level-up celebration if level changed
+          if (newLevel > prevLevel && window.DealSimCelebrations) {
+            window.DealSimCelebrations.showLevelUp(newLevel, p.xp);
+          }
+
+          showToastIfAvailable('\uD83C\uDFAF Daily Challenge bonus: +50 XP');
+        }
+      }
+    } catch (_) { /* corrupted profile — skip bonus silently */ }
+  }
+
+  window.addEventListener('dealsim:sessionRecorded', awardChallengeXP);
+
   window.DealSimDailyChallenge = {
     init: function () {
       fetch('/api/challenges/today').then(function (r) {

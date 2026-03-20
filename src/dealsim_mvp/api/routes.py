@@ -141,6 +141,7 @@ class CreateSessionRequest(BaseModel):
     target_value: float = Field(gt=0, examples=[120000])
     difficulty: str = Field(default="medium", examples=["easy", "medium", "hard"])
     context: str = Field(default="", max_length=500, examples=["Senior engineer role at a startup"])
+    custom_context: str | None = Field(default=None, max_length=500, description="User-supplied situational context injected into the opponent persona")
     user_id: str = Field(default="", max_length=128, description="Optional user ID for history tracking")
     opponent_params: dict | None = Field(default=None, description="Slider overrides for opponent persona tuning")
 
@@ -439,6 +440,7 @@ async def api_create_session(request: Request, body: CreateSessionRequest) -> Cr
         "target_value": body.target_value,
         "difficulty": body.difficulty,
         "context": body.context,
+        "custom_context": body.custom_context,
         "opponent_params": body.opponent_params,
     }
     try:

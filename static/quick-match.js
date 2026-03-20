@@ -55,8 +55,11 @@
       '<div style="font-size:1.1rem;font-weight:700;margin-bottom:4px">Quick Match</div>' +
       '<div style="font-size:0.85rem;opacity:0.65;margin-bottom:16px">Jump into a random negotiation</div>' +
       '<div style="display:inline-block;background:var(--accent);color:#fff;padding:8px 28px;border-radius:10px;font-weight:600;font-size:0.9rem">Start</div>';
-    qm.onmouseenter = function () { qm.style.borderColor = 'var(--accent-light)'; qm.style.transform = 'translateY(-2px)'; };
-    qm.onmouseleave = function () { qm.style.borderColor = 'var(--accent)'; qm.style.transform = 'none'; };
+    // Only apply hover transforms on non-touch devices to avoid sticky states on mobile
+    if (window.matchMedia && !window.matchMedia('(hover: none)').matches) {
+      qm.onmouseenter = function () { qm.style.borderColor = 'var(--accent-light)'; qm.style.transform = 'translateY(-2px)'; };
+      qm.onmouseleave = function () { qm.style.borderColor = 'var(--accent)'; qm.style.transform = 'none'; };
+    }
     qm.onclick = function () { startQuickMatch(); };
 
     // Full Setup card
@@ -74,8 +77,10 @@
       '<div style="font-size:1.1rem;font-weight:700;margin-bottom:4px">Full Setup</div>' +
       '<div style="font-size:0.85rem;opacity:0.65;margin-bottom:16px">Choose scenario, difficulty, and context</div>' +
       '<div style="display:inline-block;border:1px solid var(--card-border);color:var(--text);padding:8px 28px;border-radius:10px;font-weight:600;font-size:0.9rem">Customize</div>';
-    fs.onmouseenter = function () { fs.style.borderColor = 'var(--accent)'; fs.style.transform = 'translateY(-2px)'; };
-    fs.onmouseleave = function () { fs.style.borderColor = 'var(--card-border)'; fs.style.transform = 'none'; };
+    if (window.matchMedia && !window.matchMedia('(hover: none)').matches) {
+      fs.onmouseenter = function () { fs.style.borderColor = 'var(--accent)'; fs.style.transform = 'translateY(-2px)'; };
+      fs.onmouseleave = function () { fs.style.borderColor = 'var(--card-border)'; fs.style.transform = 'none'; };
+    }
     fs.onclick = function () {
       var form = document.getElementById('landing-form');
       if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });

@@ -12,9 +12,9 @@
  *              'Concession Pattern': 0-100, 'BATNA Usage': 0-100,
  *              'Emotional Control': 0-100, 'Value Creation': 0-100 } }
  *
- * NOTE: 'dims' is not written by default in index.html. Extend
- * saveScoreToHistory(data) to include dims if sparklines are needed:
- *   dims: dims   (the dims object built from data.dimensions in renderScorecard)
+ * NOTE: 'dims' is written by saveScoreToHistory() in index.html.
+ * It is built from data.dimensions in renderScorecard and stored as:
+ *   dims: { 'Opening Strategy': 0-100, ... }  (present on every scored session)
  */
 (function () {
   'use strict';
