@@ -1,7 +1,7 @@
 // DealSim Service Worker
 // Strategy: cache-first for app shell, network-first for API calls
 
-const CACHE_VERSION = 'dealsim-v1';
+const CACHE_VERSION = 'dealsim-v2';
 const API_PATTERN = /\/api\//;
 
 const APP_SHELL = [
