@@ -62,6 +62,15 @@
     /* Accessibility */
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border-width: 0; }
 
+    /* Mobile touch fix — eliminate 300ms tap delay and sticky hover */
+    button, [role="button"], [role="option"], [role="radio"], [onclick] {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    @media (hover: none) {
+      .group:hover .group-hover\:opacity-100 { opacity: 0 !important; }
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: var(--nav-bg, #12133a); }
