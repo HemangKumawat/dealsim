@@ -9,9 +9,9 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 # Configuration — edit these before running
 # ---------------------------------------------------------------------------
-DOMAIN="${DEALSIM_DOMAIN:-dealsim.app}"
-EMAIL="${DEALSIM_EMAIL:-admin@dealsim.app}"
-GITHUB_REPO="${DEALSIM_REPO:-https://github.com/YOUR_USERNAME/dealsim.git}"
+DOMAIN="${DEALSIM_DOMAIN:-dealsim.io}"
+EMAIL="${DEALSIM_EMAIL:-admin@dealsim.io}"
+GITHUB_REPO="${DEALSIM_REPO:-https://github.com/HemangKumawat/dealsim.git}"
 APP_DIR="/opt/dealsim"
 BACKUP_DIR="/opt/backups/dealsim"
 DOZZLE_PORT="9999"  # internal only, behind auth
