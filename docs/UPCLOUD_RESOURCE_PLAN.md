@@ -210,7 +210,7 @@ The UpCloud General Purpose 2 vCPU / 8 GB plan costs approximately **€26/month
 |------------------------|-------------|
 | Server (General 2/8)   | ~€26/mo     |
 | Automated backups (UpCloud) | ~€5/mo (20% of server cost) |
-| Domain (dealsim.io)    | ~€1-2/mo amortized |
+| Domain (dealsim.org)    | ~€1-2/mo amortized |
 | SSL (Let's Encrypt)    | Free        |
 | **Total**              | **~€32-33/mo** |
 

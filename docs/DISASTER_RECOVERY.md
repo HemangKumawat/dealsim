@@ -112,7 +112,7 @@ docker compose -f docker-compose.production.yml restart dealsim
 docker compose -f docker-compose.production.yml up -d --build dealsim
 
 # Verify
-curl -s https://dealsim.io/health | jq .
+curl -s https://dealsim.org/health | jq .
 ```
 
 **RTO:** 2 minutes.
@@ -193,7 +193,7 @@ git checkout <GOOD_COMMIT>
 docker compose -f docker-compose.production.yml up -d --build
 
 # Verify
-curl -s https://dealsim.io/health | jq .
+curl -s https://dealsim.org/health | jq .
 ```
 
 Alternative -- rollback to previous Docker image:
@@ -337,14 +337,14 @@ docker compose -f docker-compose.production.yml up -d --build
 # ---------------------------------------------------------------
 # Step 8: DNS
 # ---------------------------------------------------------------
-# Update A record for dealsim.io to point to NEW_VPS_IP
+# Update A record for dealsim.org to point to NEW_VPS_IP
 # TTL should be 300s (5 min) for fast propagation
 
 # ---------------------------------------------------------------
 # Step 9: Verify
 # ---------------------------------------------------------------
-curl -s https://dealsim.io/health | jq .
-curl -s "https://dealsim.io/admin/stats?key=YOUR_ADMIN_KEY" | head -20
+curl -s https://dealsim.org/health | jq .
+curl -s "https://dealsim.org/admin/stats?key=YOUR_ADMIN_KEY" | head -20
 ```
 
 ---
@@ -462,7 +462,7 @@ if [ "$HEALTH" != "200" ]; then
   git checkout "$PREV_COMMIT"
   docker compose -f docker-compose.production.yml up -d --build
   sleep 10
-  echo "Rollback complete. Verify: curl https://dealsim.io/health"
+  echo "Rollback complete. Verify: curl https://dealsim.org/health"
   exit 1
 fi
 

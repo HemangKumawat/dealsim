@@ -74,7 +74,7 @@ echo ""
 # ---------------------------------------------------------------------------
 # Step 0b: Load domain from .env and substitute placeholders in nginx config
 #
-# nginx/sites-available/dealsim.conf ships with "dealsim.io" as the domain.
+# nginx/sites-available/dealsim.conf ships with "dealsim.org" as the domain.
 # If DEALSIM_DOMAIN is set in .env, replace it in the live config.
 # The source file is never modified — we work on the checked-out copy.
 # ---------------------------------------------------------------------------
@@ -90,7 +90,7 @@ DOMAIN="${DEALSIM_DOMAIN:-}"
 EMAIL="${DEALSIM_EMAIL:-}"
 
 if [[ -z "${DOMAIN}" ]]; then
-    warn "DEALSIM_DOMAIN is not set in .env — nginx config will use 'dealsim.io' as server_name."
+    warn "DEALSIM_DOMAIN is not set in .env — nginx config will use 'dealsim.org' as server_name."
     warn "Set DEALSIM_DOMAIN=yourdomain.com in .env before the first deploy."
 else
     NGINX_CONF="${APP_DIR}/nginx/sites-available/dealsim.conf"
@@ -160,7 +160,7 @@ echo ""
 # ---------------------------------------------------------------------------
 step "SSL certificate check"
 
-CERT_PATH="/etc/letsencrypt/live/${DOMAIN:-dealsim.io}/fullchain.pem"
+CERT_PATH="/etc/letsencrypt/live/${DOMAIN:-dealsim.org}/fullchain.pem"
 
 if [[ -z "${DOMAIN}" ]]; then
     warn "DEALSIM_DOMAIN not set — skipping SSL issuance. Nginx will not start without a domain."

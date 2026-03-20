@@ -4,7 +4,7 @@ Server: UpCloud 2 CPU / 8GB RAM, Ubuntu 24.04, Frankfurt DC (94.237.87.238)
 
 ## Prerequisites
 
-- Domain `dealsim.io` DNS A record pointing to `94.237.87.238`
+- Domain `dealsim.org` DNS A record pointing to `94.237.87.238`
 - Docker and Docker Compose installed on the server
 - Ports 80 and 443 open in UpCloud firewall
 
@@ -39,7 +39,7 @@ cd /opt/dealsim
 Before requesting certificates, confirm DNS is resolving:
 
 ```bash
-dig +short dealsim.io
+dig +short dealsim.org
 # Should return: 94.237.87.238
 ```
 
@@ -55,7 +55,7 @@ Create `init-letsencrypt.sh` on the server:
 #!/bin/bash
 set -euo pipefail
 
-DOMAIN="dealsim.io"
+DOMAIN="dealsim.org"
 EMAIL="your-email@example.com"   # <-- change this
 STAGING=0                         # Set to 1 for testing (avoids rate limits)
 
@@ -116,7 +116,7 @@ docker run --rm -p 80:80 \
   certbot/certbot certonly --standalone \
   --email your-email@example.com \
   --agree-tos --no-eff-email \
-  -d dealsim.io -d www.dealsim.io
+  -d dealsim.org -d www.dealsim.org
 ```
 
 ### 4. Generate DH parameters (optional but recommended)
@@ -146,15 +146,15 @@ docker compose -f docker-compose.production.yml up -d
 docker compose -f docker-compose.production.yml ps
 
 # Test HTTP redirect
-curl -I http://dealsim.io
-# Should return 301 -> https://dealsim.io
+curl -I http://dealsim.org
+# Should return 301 -> https://dealsim.org
 
 # Test HTTPS
-curl -I https://dealsim.io/health
+curl -I https://dealsim.org/health
 # Should return 200
 
 # Check SSL grade
-# Visit: https://www.ssllabs.com/ssltest/analyze.html?d=dealsim.io
+# Visit: https://www.ssllabs.com/ssltest/analyze.html?d=dealsim.org
 ```
 
 ## SSL Certificate Renewal
@@ -248,7 +248,7 @@ docker compose -f docker-compose.production.yml exec dealsim python -c "import u
 ```bash
 # Fire 20 rapid requests to test rate limiting
 for i in $(seq 1 20); do
-  curl -s -o /dev/null -w "%{http_code}\n" https://dealsim.io/health
+  curl -s -o /dev/null -w "%{http_code}\n" https://dealsim.org/health
 done
 ```
 

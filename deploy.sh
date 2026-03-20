@@ -9,8 +9,8 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 # Configuration — edit these before running
 # ---------------------------------------------------------------------------
-DOMAIN="${DEALSIM_DOMAIN:-dealsim.io}"
-EMAIL="${DEALSIM_EMAIL:-admin@dealsim.io}"
+DOMAIN="${DEALSIM_DOMAIN:-dealsim.org}"
+EMAIL="${DEALSIM_EMAIL:-admin@dealsim.org}"
 GITHUB_REPO="${DEALSIM_REPO:-https://github.com/HemangKumawat/dealsim.git}"
 APP_DIR="/opt/dealsim"
 BACKUP_DIR="/opt/backups/dealsim"
