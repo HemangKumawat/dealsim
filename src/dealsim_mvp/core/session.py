@@ -11,6 +11,8 @@ so replacing the in-memory store with Redis or a DB requires only changing
 
 from __future__ import annotations
 
+import asyncio
+import concurrent.futures
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -29,11 +31,16 @@ from dealsim_mvp.core.simulator import (
 )
 from dealsim_mvp.core.store import save_session, load_session, load_all_sessions
 
-# Conditional import — LLMSimulator may not be installed in all environments
+# Conditional imports — LLM/MiroFish may not be installed in all environments
 try:
     from dealsim_mvp.core.llm_simulator import LLMSimulator as _LLMSimulator
 except ImportError:
     _LLMSimulator = None  # type: ignore[misc,assignment]
+
+try:
+    from dealsim_mvp.core.mirofish import MiroFishSimulator as _MiroFishSimulator
+except ImportError:
+    _MiroFishSimulator = None  # type: ignore[misc,assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +95,7 @@ class TurnResult:
 # ---------------------------------------------------------------------------
 
 MAX_ROUNDS = 20
+_SESSION_TTL_SECONDS = 3600  # 1 hour
 
 _SESSIONS: dict[str, NegotiationSession] = {}
 _sessions_lock = threading.Lock()
@@ -362,8 +370,10 @@ async def create_session_async(
 
     session_id = str(uuid.uuid4())
 
-    # Use async opening if available
+    # Use async opening if available (LLM or MiroFish simulators)
     if _LLMSimulator is not None and isinstance(sim, _LLMSimulator):
+        opening_turn = await sim.opening_statement_async(state)
+    elif _MiroFishSimulator is not None and isinstance(sim, _MiroFishSimulator):
         opening_turn = await sim.opening_statement_async(state)
     else:
         opening_turn = sim.opening_statement(state)
@@ -397,8 +407,10 @@ async def negotiate_async(session_id: str, user_message: str) -> TurnResult:
             f"Session {session_id} is {session.status.value} — cannot accept new turns."
         )
 
-    # Use async generate if available
+    # Use async generate if available (LLM or MiroFish simulators)
     if _LLMSimulator is not None and isinstance(session.simulator, _LLMSimulator):
+        opp_turn = await session.simulator.generate_response_async(session.state, user_message)
+    elif _MiroFishSimulator is not None and isinstance(session.simulator, _MiroFishSimulator):
         opp_turn = await session.simulator.generate_response_async(session.state, user_message)
     else:
         opp_turn = session.simulator.generate_response(session.state, user_message)
@@ -515,6 +527,20 @@ def complete_session(session_id: str) -> Scorecard:
     scorecard          = generate_scorecard(session.state, session_id)
     session.scorecard  = scorecard
     _store_session(session)
+
+    # Clean up stateful simulators (e.g. MiroFish holds live server state)
+    if hasattr(session.simulator, 'cleanup'):
+        import asyncio
+        try:
+            asyncio.run(session.simulator.cleanup())
+        except RuntimeError:
+            # Already inside an event loop — fire-and-forget in a thread
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                pool.submit(asyncio.run, session.simulator.cleanup())
+        except Exception:
+            logger.debug("Simulator cleanup failed", exc_info=True)
+
     return scorecard
 
 
@@ -565,3 +591,37 @@ def list_sessions() -> list[dict]:
             }
             for s in _SESSIONS.values()
         ]
+
+
+def cleanup_stale_sessions() -> int:
+    """Clean up sessions older than TTL. Returns count of cleaned sessions.
+
+    Stops MiroFish simulations and removes expired sessions from memory.
+    Called periodically by the background task in app.py.
+    """
+    now = datetime.now(timezone.utc)
+    cleaned = 0
+    stale_ids = []
+
+    for sid, session in _SESSIONS.items():
+        age = (now - session.created_at).total_seconds()
+        if age > _SESSION_TTL_SECONDS and session.status != SessionStatus.ACTIVE:
+            stale_ids.append(sid)
+        elif age > _SESSION_TTL_SECONDS * 2:  # 2x TTL — force cleanup even if active
+            stale_ids.append(sid)
+
+    for sid in stale_ids:
+        session = _SESSIONS.pop(sid, None)
+        if session and hasattr(session.simulator, 'cleanup'):
+            try:
+                asyncio.run(session.simulator.cleanup())
+            except RuntimeError:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                    pool.submit(asyncio.run, session.simulator.cleanup())
+            except Exception:
+                logger.debug("Stale session cleanup failed for %s", sid, exc_info=True)
+        cleaned += 1
+
+    if cleaned:
+        logger.info("Cleaned up %d stale sessions", cleaned)
+    return cleaned

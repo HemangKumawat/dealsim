@@ -19,6 +19,9 @@ import traceback
 from html import escape as html_escape
 from pathlib import Path
 
+import asyncio as _asyncio
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -60,52 +63,40 @@ logger = logging.getLogger("dealsim")
 
 def _build_simulator():
     """
-    Return the configured simulator instance.
+    Return the configured default simulator instance.
 
-    When DEALSIM_USE_LLM=true and LLM_API_KEY is set, builds an LLMSimulator
-    backed by an LLMClient, with RuleBasedSimulator as the automatic fallback.
-    When disabled (default) or when the API key is absent, returns
-    RuleBasedSimulator directly so existing behaviour is completely unchanged.
+    Uses engine_factory to detect the best available engine from environment.
+    Fallback chain: MiroFish → LLM → RuleBasedSimulator.
     """
-    from dealsim_mvp.core.simulator import RuleBasedSimulator
+    from dealsim_mvp.core.engine_factory import build_simulator
+    return build_simulator(engine="auto")
 
-    if not _USE_LLM or not _LLM_API_KEY:
-        if _USE_LLM and not _LLM_API_KEY:
-            logger.warning(
-                "DEALSIM_USE_LLM=true but LLM_API_KEY is not set — "
-                "falling back to rule-based simulator"
-            )
-        else:
-            logger.info("Simulator engine: rule_based")
-        return RuleBasedSimulator()
 
-    try:
-        from dealsim_mvp.core.llm_client import LLMClient, LLMConfig
-        from dealsim_mvp.core.llm_simulator import LLMSimulator
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    """Manage startup (background TTL cleanup) and shutdown (MiroFish cleanup)."""
+    # Startup: launch periodic session cleanup
+    async def _cleanup_loop():
+        while True:
+            await _asyncio.sleep(300)  # every 5 minutes
+            try:
+                from dealsim_mvp.core.session import cleanup_stale_sessions
+                cleanup_stale_sessions()
+            except Exception:
+                logger.debug("Session cleanup task error", exc_info=True)
 
-        config = LLMConfig(
-            api_key=_LLM_API_KEY,
-            base_url=_LLM_BASE_URL,
-            model=_LLM_MODEL,
-            temperature=_LLM_TEMPERATURE,
-            max_tokens=_LLM_MAX_TOKENS,
-            timeout=_LLM_TIMEOUT,
-        )
-        llm_client = LLMClient(config)
-        fallback = RuleBasedSimulator()
-        simulator = LLMSimulator(client=llm_client, fallback=fallback)
-        logger.info(
-            "Simulator engine: llm (model=%s, base_url=%s)",
-            _LLM_MODEL,
-            _LLM_BASE_URL,
-        )
-        return simulator
-    except Exception:
-        logger.warning(
-            "Failed to initialise LLMSimulator — falling back to rule-based simulator",
-            exc_info=True,
-        )
-        return RuleBasedSimulator()
+    cleanup_task = _asyncio.create_task(_cleanup_loop())
+    yield
+    # Shutdown: stop cleanup task, clean up MiroFish simulations
+    cleanup_task.cancel()
+    from dealsim_mvp.core.session import _SESSIONS
+    for sid, session in list(_SESSIONS.items()):
+        if hasattr(session.simulator, 'cleanup'):
+            try:
+                await session.simulator.cleanup()
+            except Exception:
+                pass
+    logger.info("Shutdown: cleaned up %d sessions", len(_SESSIONS))
 
 
 def create_app() -> FastAPI:
@@ -117,6 +108,7 @@ def create_app() -> FastAPI:
         version=__version__,
         docs_url=None if is_production else "/docs",
         redoc_url=None if is_production else "/redoc",
+        lifespan=_lifespan,
     )
 
     # -- CORS ---------------------------------------------------------------
@@ -192,20 +184,33 @@ def create_app() -> FastAPI:
         if not is_production:
             data["version"] = __version__
 
-        # Simulator status — check whether the active simulator is LLM-backed
-        # and, if so, whether it considers itself available.
+        # Simulator status — report which engine is active
         sim = app.state.simulator
         sim_name = type(sim).__name__
-        is_llm = sim_name == "LLMSimulator"
+        engine_map = {
+            "LLMSimulator": "llm",
+            "MiroFishSimulator": "mirofish",
+            "RuleBasedSimulator": "rule_based",
+        }
+        engine_label = engine_map.get(sim_name, "rule_based")
+
         llm_available: bool = False
-        if is_llm:
+        if hasattr(sim, "is_available"):
             try:
                 llm_available = sim.is_available()
             except Exception:
                 llm_available = False
 
-        data["simulator_engine"] = "llm" if is_llm else "rule_based"
+        data["simulator_engine"] = engine_label
         data["llm_available"] = llm_available
+
+        # Report available engines
+        try:
+            from dealsim_mvp.core.engine_factory import get_available_engines
+            data["available_engines"] = get_available_engines()
+        except Exception:
+            data["available_engines"] = ["rule_based"]
+
         return data
 
     # -- Static files & root HTML ------------------------------------------

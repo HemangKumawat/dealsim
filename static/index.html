@@ -155,6 +155,7 @@
 
     /* Difficulty pill active states */
     .diff-btn.selected { background-color: var(--accent, #f95c5c); color: #fff; border-color: var(--accent, #f95c5c); }
+    .engine-btn.selected { background-color: var(--accent, #f95c5c); color: #fff; border-color: var(--accent, #f95c5c); }
 
     /* Button active/pressed state */
     button:active:not(:disabled) { transform: scale(0.97); }
@@ -558,6 +559,8 @@
           Practice any negotiation against a calibrated AI counterpart.<br />
           Get scored. Get better.
         </p>
+        <!-- Theme-conditional taglines — emotional priming per mode -->
+        <p class="theme-tagline text-center text-sm mb-6 stagger-2" style="opacity:0.55; letter-spacing:0.03em;"></p>
 
         <!-- HERO: Instant Demo CTA -->
         <div class="mb-6 stagger-3">
@@ -583,6 +586,38 @@
             <div class="text-xs font-medium text-white/70 group-hover:text-white transition-colors">Earnings Calc</div>
           </button>
         </div>
+
+        <!-- How it works — elegant MiroFish explanation -->
+        <details class="mb-8 stagger-5 group">
+          <summary class="flex items-center gap-2 cursor-pointer text-sm text-white/50 hover:text-white/70 transition-colors select-none">
+            <svg class="w-4 h-4 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            How the simulation works
+          </summary>
+          <div class="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] p-6 space-y-4">
+            <p class="text-sm text-white/60 leading-relaxed">
+              Every negotiation in DealSim runs against an opponent with a hidden personality, a walk-away price, and private constraints you have to discover through conversation.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="rounded-xl border border-white/10 p-4">
+                <div class="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">Rule Engine</div>
+                <p class="text-xs text-white/50 leading-relaxed">Game-theoretic opponent with calibrated concession curves. Always available, zero latency. The foundation.</p>
+              </div>
+              <div class="rounded-xl border border-white/10 p-4">
+                <div class="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">LLM Engine</div>
+                <p class="text-xs text-white/50 leading-relaxed">Large language model generates natural dialogue within the opponent's persona constraints. More conversational, same scoring.</p>
+              </div>
+              <div class="rounded-xl border border-coral/20 p-4 bg-coral/[0.03]">
+                <div class="text-xs font-semibold text-coral/70 uppercase tracking-wider mb-2">MiroFish Engine</div>
+                <p class="text-xs text-white/55 leading-relaxed">
+                  Powered by <a href="https://github.com/mirofish/mirofish" target="_blank" rel="noopener" class="text-coral/70 hover:text-coral transition-colors">MiroFish</a> — an open-source multi-agent simulation engine. Your opponent is a live AI agent with its own memory, personality model, and behavioral parameters you can tune with sliders. It doesn't follow a script; it reacts to your strategy in real time.
+                </p>
+              </div>
+            </div>
+            <p class="text-xs text-white/35 leading-relaxed">
+              The engine auto-selects the best available option. If MiroFish is unavailable, the system falls back gracefully — you always get a working opponent. Your score is computed identically regardless of engine.
+            </p>
+          </div>
+        </details>
 
         <!-- Form card -->
         <div class="form-card rounded-2xl border p-8 shadow-2xl stagger-5">
@@ -793,6 +828,7 @@
         </div>
       </div>
       <div class="flex items-center gap-2 sm:gap-4">
+        <span id="engine-badge" class="hidden text-[10px] font-medium px-2 py-0.5 rounded-full border border-white/10 text-white/40" title="Simulation engine powering this session"></span>
         <div class="hidden sm:flex items-center gap-2 text-sm text-white/70">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
           Round <span id="round-counter" class="text-white font-semibold">1</span>
@@ -1461,6 +1497,87 @@
           </div>
         </div>
 
+        <!-- Engine selector -->
+        <div class="result-card rounded-xl p-5 mt-6">
+          <div class="flex justify-between items-center mb-3">
+            <div class="tooltip-wrap">
+              <label class="text-sm font-medium text-white/80 cursor-help">AI Engine</label>
+              <span class="tooltip-text">Which simulation engine powers the opponent. MiroFish uses multi-agent AI for more realistic responses.</span>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" onclick="selectEngine('auto')" id="engine-auto" class="engine-btn flex-1 text-xs py-2 rounded-lg border border-white/20 text-white/60 hover:border-coral/50 transition-colors selected" aria-pressed="true">Auto</button>
+            <button type="button" onclick="selectEngine('rule_based')" id="engine-rule_based" class="engine-btn flex-1 text-xs py-2 rounded-lg border border-white/20 text-white/60 hover:border-coral/50 transition-colors">Rules</button>
+            <button type="button" onclick="selectEngine('llm')" id="engine-llm" class="engine-btn flex-1 text-xs py-2 rounded-lg border border-white/20 text-white/60 hover:border-coral/50 transition-colors">LLM</button>
+            <button type="button" onclick="selectEngine('mirofish')" id="engine-mirofish" class="engine-btn flex-1 text-xs py-2 rounded-lg border border-white/20 text-white/60 hover:border-coral/50 transition-colors">MiroFish</button>
+          </div>
+        </div>
+
+        <!-- MiroFish User Parameters (collapsible, shown when MiroFish selected) -->
+        <div id="mirofish-params" class="space-y-4 mt-4" style="display:none;">
+          <p class="text-xs text-white/50">Shape your opponent's personality. These parameters tune the live AI agent's behavioral model — every slider changes how it thinks, not just what it says.</p>
+
+          <div class="result-card rounded-xl p-5">
+            <div class="flex justify-between items-center mb-3">
+              <div class="tooltip-wrap">
+                <label class="text-sm font-medium text-white/80 cursor-help">Market Pressure</label>
+                <span class="tooltip-text">External pressure on the deal. High = urgent market conditions pushing both sides.</span>
+              </div>
+              <span id="mf-market-pressure-val" class="text-sm text-coral font-semibold">50</span>
+            </div>
+            <input type="range" id="mf-market-pressure" min="0" max="100" value="50" oninput="updateMfSlider('mf-market-pressure')" aria-label="Market pressure">
+            <div class="flex justify-between text-xs text-white/50 mt-1"><span>Relaxed</span><span>Intense</span></div>
+          </div>
+
+          <div class="result-card rounded-xl p-5">
+            <div class="flex justify-between items-center mb-3">
+              <div class="tooltip-wrap">
+                <label class="text-sm font-medium text-white/80 cursor-help">Opponent Patience</label>
+                <span class="tooltip-text">How long the opponent will keep negotiating before walking away or forcing closure.</span>
+              </div>
+              <span id="mf-patience-val" class="text-sm text-coral font-semibold">50</span>
+            </div>
+            <input type="range" id="mf-patience" min="0" max="100" value="50" oninput="updateMfSlider('mf-patience')" aria-label="Patience">
+            <div class="flex justify-between text-xs text-white/50 mt-1"><span>Impatient</span><span>Very Patient</span></div>
+          </div>
+
+          <div class="result-card rounded-xl p-5">
+            <div class="flex justify-between items-center mb-3">
+              <div class="tooltip-wrap">
+                <label class="text-sm font-medium text-white/80 cursor-help">Risk Tolerance</label>
+                <span class="tooltip-text">How willing the opponent is to risk losing the deal over their position.</span>
+              </div>
+              <span id="mf-risk-tolerance-val" class="text-sm text-coral font-semibold">50</span>
+            </div>
+            <input type="range" id="mf-risk-tolerance" min="0" max="100" value="50" oninput="updateMfSlider('mf-risk-tolerance')" aria-label="Risk tolerance">
+            <div class="flex justify-between text-xs text-white/50 mt-1"><span>Risk-Averse</span><span>Risk-Seeking</span></div>
+          </div>
+
+          <div class="result-card rounded-xl p-5">
+            <div class="flex justify-between items-center mb-3">
+              <div class="tooltip-wrap">
+                <label class="text-sm font-medium text-white/80 cursor-help">Information Sharing</label>
+                <span class="tooltip-text">How freely the opponent shares information about their constraints and needs.</span>
+              </div>
+              <span id="mf-information-sharing-val" class="text-sm text-coral font-semibold">50</span>
+            </div>
+            <input type="range" id="mf-information-sharing" min="0" max="100" value="50" oninput="updateMfSlider('mf-information-sharing')" aria-label="Information sharing">
+            <div class="flex justify-between text-xs text-white/50 mt-1"><span>Guarded</span><span>Very Open</span></div>
+          </div>
+
+          <div class="result-card rounded-xl p-5">
+            <div class="flex justify-between items-center mb-3">
+              <div class="tooltip-wrap">
+                <label class="text-sm font-medium text-white/80 cursor-help">Anchoring Strength</label>
+                <span class="tooltip-text">How firmly the opponent sticks to their initial position before conceding.</span>
+              </div>
+              <span id="mf-anchoring-strength-val" class="text-sm text-coral font-semibold">50</span>
+            </div>
+            <input type="range" id="mf-anchoring-strength" min="0" max="100" value="50" oninput="updateMfSlider('mf-anchoring-strength')" aria-label="Anchoring strength">
+            <div class="flex justify-between text-xs text-white/50 mt-1"><span>Flexible</span><span>Very Firm</span></div>
+          </div>
+        </div>
+
         <div class="mt-8 flex gap-3">
           <button onclick="resetTuner()" class="flex-1 border border-white/20 text-white/60 font-medium py-3 rounded-xl text-sm hover:border-white/40 transition-colors">
             Reset Defaults
@@ -1981,6 +2098,56 @@
       showToast('Counterpart persona applied');
     }
 
+    /* ==================================================================
+       ENGINE SELECTION & MIROFISH PARAMS
+    ================================================================== */
+    state.selectedEngine = 'auto';
+    state.mirofishParams = {
+      market_pressure: 50,
+      patience: 50,
+      risk_tolerance: 50,
+      information_sharing: 50,
+      anchoring_strength: 50,
+    };
+
+    function selectEngine(engine) {
+      state.selectedEngine = engine;
+      document.querySelectorAll('.engine-btn').forEach(btn => {
+        btn.classList.remove('selected');
+        btn.setAttribute('aria-pressed', 'false');
+      });
+      const btn = document.getElementById('engine-' + engine);
+      if (btn) {
+        btn.classList.add('selected');
+        btn.setAttribute('aria-pressed', 'true');
+      }
+      // Show MiroFish params for mirofish and auto (since auto may use MiroFish)
+      const mfPanel = document.getElementById('mirofish-params');
+      if (mfPanel) mfPanel.style.display = (engine === 'mirofish' || engine === 'auto') ? 'block' : 'none';
+    }
+
+    function updateMfSlider(id) {
+      const slider = document.getElementById(id);
+      const v = parseInt(slider.value);
+      // Show descriptive label instead of just a number
+      const labels = {
+        'mf-market-pressure': v > 70 ? 'Intense' : v > 30 ? 'Moderate' : 'Relaxed',
+        'mf-patience': v > 70 ? 'Very Patient' : v > 30 ? 'Moderate' : 'Impatient',
+        'mf-risk-tolerance': v > 70 ? 'Bold' : v > 30 ? 'Balanced' : 'Cautious',
+        'mf-information-sharing': v > 70 ? 'Open' : v > 30 ? 'Selective' : 'Guarded',
+        'mf-anchoring-strength': v > 70 ? 'Firm' : v > 30 ? 'Moderate' : 'Flexible',
+      };
+      document.getElementById(id + '-val').textContent = labels[id] || v;
+      const paramMap = {
+        'mf-market-pressure': 'market_pressure',
+        'mf-patience': 'patience',
+        'mf-risk-tolerance': 'risk_tolerance',
+        'mf-information-sharing': 'information_sharing',
+        'mf-anchoring-strength': 'anchoring_strength',
+      };
+      if (paramMap[id]) state.mirofishParams[paramMap[id]] = v;
+    }
+
     /* msg-input auto-resize handled by onMsgInput() inline oninput handler */
 
     /* ==================================================================
@@ -2008,8 +2175,10 @@
           difficulty,
           context,
           opponent_params: state.tunerParams,
+          engine: state.selectedEngine || 'auto',
         };
         if (customContext) body.custom_context = customContext;
+        if (state.selectedEngine === 'mirofish' || state.selectedEngine === 'auto') body.user_params = state.mirofishParams;
 
         const res = await fetchWithTimeout('/api/sessions', {
           method: 'POST',
@@ -2036,6 +2205,35 @@
 
         if (data.opening_message) {
           appendBubble('opponent', data.opening_message);
+        }
+
+        // Engine badge — show which engine is powering this session
+        const engineBadge = document.getElementById('engine-badge');
+        const engineUsed = data.engine_used || 'rule_based';
+        const engineLabels = {
+          'rule_based': 'Rules',
+          'llm': 'AI (LLM)',
+          'mirofish': 'MiroFish AI',
+        };
+        if (engineBadge) {
+          engineBadge.textContent = engineLabels[engineUsed] || engineUsed;
+          engineBadge.classList.remove('hidden');
+          if (engineUsed === 'mirofish') {
+            engineBadge.style.borderColor = 'rgba(249,92,92,0.3)';
+            engineBadge.style.color = 'rgba(249,92,92,0.7)';
+          } else if (engineUsed === 'llm') {
+            engineBadge.style.borderColor = 'rgba(129,140,248,0.3)';
+            engineBadge.style.color = 'rgba(129,140,248,0.7)';
+          } else {
+            engineBadge.style.borderColor = '';
+            engineBadge.style.color = '';
+          }
+        }
+
+        // Fallback toast — if user asked for MiroFish but got something else
+        const requestedEngine = state.selectedEngine || 'auto';
+        if (requestedEngine === 'mirofish' && engineUsed !== 'mirofish') {
+          showToast('MiroFish unavailable — using ' + (engineLabels[engineUsed] || 'fallback') + ' engine. Your experience is unchanged.');
         }
 
         showSection('sec-chat');
@@ -2400,6 +2598,29 @@
           }
         } catch (e) { console.warn('[gamification] Error recording session:', e); }
       }
+
+      // Q10: "Ready for harder?" — gentle nudge when performance exceeds threshold
+      (function checkDifficultyProgression() {
+        const THRESHOLD = 80;
+        const diff = state.difficulty || 'easy';
+        const flagKey = 'dealsim_nudge_' + diff;
+        try {
+          if (score >= THRESHOLD && !localStorage.getItem(flagKey)) {
+            localStorage.setItem(flagKey, '1');
+            const nextDiff = diff === 'easy' ? 'Medium' : diff === 'medium' ? 'Hard' : null;
+            if (nextDiff) {
+              setTimeout(() => {
+                const toast = document.createElement('div');
+                toast.className = 'toast fixed bottom-20 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl border text-sm z-50 shadow-lg';
+                toast.style.cssText = 'animation: slideUpFade 0.4s ease-out both;';
+                toast.innerHTML = 'You\u2019re doing well! Ready to try <strong>' + nextDiff + '</strong> difficulty?';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 6000);
+              }, 2000);
+            }
+          }
+        } catch (_) {}
+      })();
 
       // Fetch money left on table from debrief endpoint and show on scorecard
       if (state.sessionId) {
@@ -3421,7 +3642,7 @@
           proTips.push({
             icon: '?',
             title: 'Signal your alternatives once',
-            desc: 'A single mention of other options shifts the power dynamic. "I am evaluating a few opportunities" is enough to change the other side's calculus.',
+            desc: 'A single mention of other options shifts the power dynamic. "I am evaluating a few opportunities" is enough to change the other side\u2019s calculus.',
           });
         }
 
@@ -4193,7 +4414,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       // AI transparency: check if LLM engine is active
       fetch('/api/health').then(r => r.json()).then(data => {
-        if (data && data.simulator_engine === 'llm') {
+        if (data && (data.simulator_engine === 'llm' || data.simulator_engine === 'mirofish')) {
           var notice = document.getElementById('ai-transparency-notice');
           if (notice) notice.classList.remove('hidden');
         }

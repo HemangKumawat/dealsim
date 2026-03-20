@@ -12,3 +12,4 @@ build/
 data/*.jsonl
 data/*.json
 !data/.gitkeep
+.gitnexus

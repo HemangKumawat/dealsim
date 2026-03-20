@@ -20,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures
 import logging
+import re
 
 from dealsim_mvp.core.llm_client import LLMClient
 from dealsim_mvp.core.persona import NegotiationPersona
@@ -72,16 +73,27 @@ IMPORTANT RULES FOR YOUR RESPONSES:
 7. Format any dollar amounts as $XX,XXX (with dollar sign and commas).
 """
 
-# Signals that indicate the LLM accepted the user's offer
-_ACCEPTANCE_SIGNALS = (
-    "deal", "agreed", "accept", "let's do it", "you've got a deal",
-    "we have a deal", "works for me", "sounds good", "done",
+# Word-boundary regexes for acceptance/rejection detection
+_ACCEPTANCE_RE = re.compile(
+    r'\b(?:' + '|'.join([
+        r"deal", r"agreed", r"accept", r"let'?s do it", r"you'?ve got a deal",
+        r"we have a deal", r"works for me", r"sounds good", r"done",
+    ]) + r')\b',
+    re.IGNORECASE,
 )
 
-# Signals that indicate the LLM is rejecting or walking away
-_REJECTION_SIGNALS = (
-    "can't do that", "no deal", "walk away", "not possible", "non-starter",
-    "unfortunately", "cannot",
+_REJECTION_RE = re.compile(
+    r'\b(?:' + '|'.join([
+        r"can'?t do that", r"no deal", r"walk away", r"not possible",
+        r"non-starter", r"unfortunately", r"cannot",
+    ]) + r')\b',
+    re.IGNORECASE,
+)
+
+# Negative patterns that override acceptance
+_NOT_ACCEPTANCE_RE = re.compile(
+    r'\b(?:not? done|far from done|not? agreed|don\'t accept|can\'t accept)\b',
+    re.IGNORECASE,
 )
 
 
@@ -344,14 +356,13 @@ class LLMSimulator(SimulatorBase):
         Offer extraction delegates to _extract_offer (same regex as simulator.py).
         """
         offer = _extract_offer(text)
-        lower = text.lower()
 
         # Acceptance: clear signal words with no new offer number
-        if offer is None and any(s in lower for s in _ACCEPTANCE_SIGNALS):
+        if offer is None and _ACCEPTANCE_RE.search(text) and not _NOT_ACCEPTANCE_RE.search(text):
             return MoveType.ACCEPTANCE, state.user_last_offer
 
         # Rejection: clear walkaway language with no counter-offer
-        if offer is None and any(s in lower for s in _REJECTION_SIGNALS):
+        if offer is None and _REJECTION_RE.search(text):
             return MoveType.REJECTION, None
 
         # Has an offer number — classify movement

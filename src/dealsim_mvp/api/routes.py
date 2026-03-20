@@ -116,6 +116,20 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api")
 
 
+# -- Simulator helpers --------------------------------------------------------
+
+def _is_stateful_simulator(sim) -> bool:
+    """Return True if the simulator holds per-session state (e.g. MiroFish).
+
+    Stateful simulators must NOT be shared as singletons across sessions.
+    """
+    try:
+        from dealsim_mvp.core.mirofish import MiroFishSimulator
+        return isinstance(sim, MiroFishSimulator)
+    except ImportError:
+        return False
+
+
 # -- Safe tracking helpers (never let analytics break the API) ---------------
 
 def _track(event_type: str, data: dict | None = None) -> None:
@@ -138,6 +152,9 @@ def _feature(feature_name: str, extra: dict | None = None) -> None:
 
 # -- Sessions -------------------------------------------------------------
 
+_ALLOWED_ENGINES = frozenset({"auto", "rule_based", "llm", "mirofish"})
+
+
 class CreateSessionRequest(BaseModel):
     scenario_type: str = Field(default="salary", examples=["salary", "freelance"])
     target_value: float = Field(gt=0, examples=[120000])
@@ -145,7 +162,44 @@ class CreateSessionRequest(BaseModel):
     context: str = Field(default="", max_length=500, examples=["Senior engineer role at a startup"])
     custom_context: str | None = Field(default=None, max_length=500, description="User-supplied situational context injected into the opponent persona")
     user_id: str = Field(default="", max_length=128, description="Optional user ID for history tracking")
-    opponent_params: dict | None = Field(default=None, description="Slider overrides for opponent persona tuning")
+    opponent_params: dict | None = Field(default=None, description="Slider overrides for opponent persona tuning (aggressiveness, flexibility, patience, knowledge, emotion, budget)")
+    engine: str = Field(default="auto", description="Simulation engine: auto, rule_based, llm, mirofish")
+    user_params: dict | None = Field(default=None, description="User-tweakable MiroFish parameters (market_pressure, patience, risk_tolerance, information_sharing, anchoring_strength)")
+
+    @field_validator("engine")
+    @classmethod
+    def engine_must_be_allowed(cls, v: str) -> str:
+        if v not in _ALLOWED_ENGINES:
+            raise ValueError(f"engine must be one of: {sorted(_ALLOWED_ENGINES)}")
+        return v
+
+    @field_validator("user_params")
+    @classmethod
+    def user_params_must_be_valid(cls, v: dict | None) -> dict | None:
+        if v is None:
+            return v
+        allowed_keys = {"market_pressure", "patience", "risk_tolerance",
+                        "information_sharing", "anchoring_strength"}
+        for key, val in v.items():
+            if key not in allowed_keys:
+                raise ValueError(f"Unknown user_param key: {key}")
+            if not isinstance(val, (int, float)) or not (0 <= val <= 100):
+                raise ValueError(f"user_param '{key}' must be a number 0-100")
+        return v
+
+    @field_validator("opponent_params")
+    @classmethod
+    def opponent_params_must_be_valid(cls, v: dict | None) -> dict | None:
+        if v is None:
+            return v
+        allowed_keys = {"aggressiveness", "flexibility", "patience",
+                        "knowledge", "emotion", "budget"}
+        for key, val in v.items():
+            if key not in allowed_keys:
+                raise ValueError(f"Unknown opponent_param key: {key}")
+            if not isinstance(val, (int, float)) or not (0 <= val <= 100):
+                raise ValueError(f"opponent_param '{key}' must be a number 0-100")
+        return v
 
     @field_validator("scenario_type")
     @classmethod
@@ -170,6 +224,7 @@ class CreateSessionResponse(BaseModel):
     opponent_role: str
     opening_message: str
     opening_offer: float | None = None
+    engine_used: str = "rule_based"
 
 
 class SendMessageRequest(BaseModel):
@@ -446,12 +501,33 @@ async def api_create_session(request: Request, body: CreateSessionRequest) -> Cr
         "opponent_params": body.opponent_params,
     }
     try:
-        # Use the app-level simulator (LLM or rule-based, configured at startup)
-        simulator = request.app.state.simulator
+        # Per-session engine selection.
+        # MiroFish is STATEFUL (holds _simulation_id per negotiation) so
+        # it must ALWAYS get a fresh instance per session. RuleBasedSimulator
+        # and LLMSimulator are stateless and can reuse the app-level singleton.
+        from dealsim_mvp.core.engine_factory import build_simulator
+        app_sim = request.app.state.simulator
+        needs_fresh = (
+            body.engine != "auto"
+            or body.user_params
+            or _is_stateful_simulator(app_sim)
+        )
+        if needs_fresh:
+            simulator = build_simulator(
+                engine=body.engine,
+                user_params=body.user_params,
+            )
+        else:
+            simulator = app_sim
         sid, opening_turn = await create_session_async(scenario=scenario, simulator=simulator)
     except Exception as exc:
         logger.exception("Failed to create session [request_id=%s]", req_id)
         raise _api_error(500, "Internal server error", "INTERNAL_ERROR", req_id) from exc
+
+    # Determine engine name for response
+    engine_name = type(simulator).__name__
+    engine_map = {"RuleBasedSimulator": "rule_based", "LLMSimulator": "llm", "MiroFishSimulator": "mirofish"}
+    engine_used = engine_map.get(engine_name, "rule_based")
 
     _track("session_created", {
         "session_id": sid,
@@ -468,6 +544,7 @@ async def api_create_session(request: Request, body: CreateSessionRequest) -> Cr
         opponent_role=state.persona.role,
         opening_message=opening_turn.text,
         opening_offer=opening_turn.offer_amount,
+        engine_used=engine_used,
     )
 
 
