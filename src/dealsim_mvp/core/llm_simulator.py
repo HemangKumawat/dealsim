@@ -92,6 +92,10 @@ class LLMSimulator(SimulatorBase):
         self.client = client
         self.fallback = fallback or RuleBasedSimulator()
 
+    def is_available(self) -> bool:
+        """Return True if the LLM client has a valid API key configured."""
+        return bool(self.client and self.client.config.api_key)
+
     # -- SimulatorBase interface -----------------------------------------
 
     def opening_statement(self, state: NegotiationState) -> Turn:
