@@ -38,7 +38,6 @@
     var qm = document.createElement('button');
     qm.type = 'button';
     qm.id = 'qm-start';
-    qm.className = 'coral-glow';
     qm.className = 'quick-action-card coral-glow';
     qm.style.cssText = [
       'border-width:2px',

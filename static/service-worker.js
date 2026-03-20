@@ -1,22 +1,31 @@
 // DealSim Service Worker
-// Strategy: cache-first for app shell, network-first for API calls
+// Strategy: network-first for HTML + API, cache-first for static assets
 
-const CACHE_VERSION = 'dealsim-v2';
+const CACHE_VERSION = 'dealsim-v3';
 const API_PATTERN = /\/api\//;
+
+// Pages that should always try network first (so deploys take effect immediately)
+const NETWORK_FIRST_PATHS = ['/', '/index.html', '/privacy.html'];
 
 const APP_SHELL = [
   '/',
   '/index.html',
+  '/tailwind.out.css',
   '/themes.css',
+  '/print.css',
+  '/toasts.js',
   '/achievements.js',
   '/celebrations.js',
   '/daily-challenge-card.js',
   '/engine-peek.js',
   '/gamification.js',
   '/learning-path.js',
+  '/onboarding.js',
   '/quick-match.js',
   '/radar-chart.js',
   '/scenario-cards.js',
+  '/score-trends.js',
+  '/session-export.js',
   '/stats-bar.js',
   '/theme-switcher.js',
   '/manifest.json',
@@ -44,13 +53,17 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first for API, cache-first for everything else
+// Fetch handler
 self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
-  if (API_PATTERN.test(event.request.url)) {
-    // Network-first for API calls — fall back to cache if offline
+  const url = new URL(event.request.url);
+  const isNetworkFirst = API_PATTERN.test(url.pathname) ||
+    NETWORK_FIRST_PATHS.includes(url.pathname);
+
+  if (isNetworkFirst) {
+    // Network-first: try network, fall back to cache
     event.respondWith(
       fetch(event.request)
         .then((response) => {
@@ -61,7 +74,7 @@ self.addEventListener('fetch', (event) => {
         .catch(() => caches.match(event.request))
     );
   } else {
-    // Cache-first for app shell assets
+    // Cache-first for static assets (JS, CSS, images)
     event.respondWith(
       caches.match(event.request).then(
         (cached) => cached || fetch(event.request).then((response) => {

@@ -96,7 +96,7 @@
   function inject() {
     var landing = document.getElementById('sec-landing');
     if (!landing) return;
-    var grid = landing.querySelector('.grid.grid-cols-3');
+    var grid = landing.querySelector('.grid.grid-cols-2');
     if (!grid) return;
     var old = document.getElementById('daily-challenge-card');
     if (old) old.parentElement.remove();
